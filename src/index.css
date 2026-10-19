@@ -1,0 +1,617 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-ink-950: #060910;
+  --color-ink-900: #0a0f18;
+  --color-ink-850: #0e1520;
+  --color-ink-800: #121b28;
+  --color-ink-750: #17212f;
+  --color-ink-700: #1d2938;
+  --color-ink-600: #2a3849;
+
+  --color-mist-100: #e8eef6;
+  --color-mist-200: oklch(92.5% 0.005 214.3);
+  --color-mist-300: #aebbcb;
+  --color-mist-400: oklch(72.3% 0.014 214.4);
+  --color-mist-500: #7d8da1;
+  --color-mist-600: oklch(45% 0.017 213.2);
+  --color-mist-700: #586678;
+
+  --color-gold: #d8ab4a;
+  --color-gold-soft: #f0d69a;
+  --color-jade: #4ec9b0;
+  --color-up: #ef5350;
+  --color-down: #26a37a;
+
+  --font-serif-cn: 'Songti SC', 'STSong', 'SimSun', 'Noto Serif SC', Georgia, serif;
+  --font-sans-cn: 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', system-ui, sans-serif;
+  --font-mono-cn: 'SFMono-Regular', Menlo, Consolas, 'Courier New', monospace;
+}
+
+/*
+ * ---------- 主题语义变量（夜晚为默认值） ----------
+ *
+ * 全站颜色都走 CSS 变量：ink/mist 等色板定义在 @theme 中供 Tailwind
+ * 工具类使用；下面这组语义变量服务于自定义样式（Markdown、Toast、
+ * 阴影、骨架屏、模块点缀色等）。
+ *
+ * 白天模式只需在文件末尾的 html[data-theme='light'] 里整体覆盖，
+ * 无需逐组件改 class。
+ */
+:root {
+  color-scheme: dark;
+
+  /* 大投影的着色（白天用浅一档，否则白底黑影过重） */
+  --shadow-tint: rgba(0, 0, 0, 0.9);
+
+  /* Toast */
+  --toast-bg: rgba(13, 20, 32, 0.95);
+  --tone-success-fg: #7fe3ce;
+  --tone-success-bd: rgba(78, 201, 176, 0.45);
+  --tone-error-fg: #f4a09e;
+  --tone-error-bd: rgba(239, 83, 80, 0.45);
+  --tone-info-fg: #f0d69a;
+  --tone-info-bd: rgba(216, 171, 74, 0.45);
+
+  /* Markdown / 代码块 */
+  --md-text: #d3dde9;
+  --md-heading: #f2f6fb;
+  --md-strong: #f4f8fc;
+  --md-code: #8fe3cf;
+  --md-pre-bg: #070b12;
+  --md-pre-text: #cfd9e6;
+  --md-stripe: rgba(255, 255, 255, 0.018);
+
+  /* 骨架屏微光 */
+  --skeleton-shine: rgba(255, 255, 255, 0.045);
+
+  /* 模块点缀色（图标、徽标、圆点），白天模式会整体加深保证对比度 */
+  --accent-gold: #d8ab4a;
+  --accent-blue: #7aa7ff;
+  --accent-jade: #4ec9b0;
+  --accent-sand: #f0d69a;
+  --accent-purple: #c792ea;
+  --accent-coral: #e8836b;
+  --accent-sky: #82aaff;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--color-ink-950);
+    color: var(--color-mist-100);
+    font-family: var(--font-sans-cn);
+    -webkit-font-smoothing: antialiased;
+    font-size: 14px;
+    line-height: 1.6;
+    transition: background-color 0.25s ease, color 0.25s ease;
+  }
+
+  ::selection {
+    background: rgba(216, 171, 74, 0.3);
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-ink-700);
+    border-radius: 8px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-ink-600);
+    background-clip: content-box;
+  }
+
+  input,
+  textarea,
+  select,
+  button {
+    font-family: inherit;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-mist-700);
+  }
+}
+
+@layer components {
+  .panel {
+    background-color: var(--color-ink-900);
+    border: 1px solid var(--color-ink-700);
+    border-radius: 14px;
+  }
+
+  .hairline {
+    border-color: var(--color-ink-700);
+  }
+
+  .field {
+    width: 100%;
+    background-color: var(--color-ink-850);
+    border: 1px solid var(--color-ink-700);
+    border-radius: 10px;
+    padding: 0.55rem 0.8rem;
+    color: var(--color-mist-100);
+    font-size: 13.5px;
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .field:focus {
+    border-color: rgba(216, 171, 74, 0.6);
+    box-shadow: 0 0 0 3px rgba(216, 171, 74, 0.12);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    border-radius: 10px;
+    padding: 0.5rem 0.9rem;
+    font-size: 13.5px;
+    font-weight: 500;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+  }
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .btn-primary {
+    background: linear-gradient(180deg, #e5bd63 0%, #c9973a 100%);
+    color: #201703;
+    font-weight: 600;
+  }
+  .btn-primary:hover:not(:disabled) {
+    filter: brightness(1.08);
+  }
+  .btn-ghost {
+    background: var(--color-ink-800);
+    border-color: var(--color-ink-700);
+    color: var(--color-mist-300);
+  }
+  .btn-ghost:hover:not(:disabled) {
+    background: var(--color-ink-750);
+    color: var(--color-mist-100);
+    border-color: var(--color-ink-600);
+  }
+  .btn-danger {
+    background: rgba(239, 83, 80, 0.12);
+    border-color: rgba(239, 83, 80, 0.35);
+    color: #f08a88;
+  }
+  .btn-danger:hover:not(:disabled) {
+    background: rgba(239, 83, 80, 0.2);
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    border-radius: 999px;
+    border: 1px solid var(--color-ink-700);
+    background: var(--color-ink-850);
+    padding: 0.12rem 0.55rem;
+    font-size: 11.5px;
+    color: var(--color-mist-500);
+  }
+
+  .serif {
+    font-family: var(--font-serif-cn);
+  }
+}
+
+/* ---------- Markdown ---------- */
+.md-body {
+  color: var(--md-text);
+  font-size: 15px;
+  line-height: 1.85;
+  word-wrap: break-word;
+}
+.md-body > * + * {
+  margin-top: 1.05em;
+}
+.md-body h1,
+.md-body h2,
+.md-body h3,
+.md-body h4 {
+  font-family: var(--font-serif-cn);
+  color: var(--md-heading);
+  line-height: 1.4;
+  font-weight: 600;
+  scroll-margin-top: 88px;
+}
+.md-body h1 {
+  font-size: 1.72em;
+  margin-top: 1.6em;
+  padding-bottom: 0.4em;
+  border-bottom: 1px solid var(--color-ink-700);
+}
+.md-body h2 {
+  font-size: 1.38em;
+  margin-top: 1.55em;
+  padding-bottom: 0.35em;
+  border-bottom: 1px dashed var(--color-ink-700);
+}
+.md-body h3 {
+  font-size: 1.15em;
+  margin-top: 1.4em;
+}
+.md-body h4 {
+  font-size: 1.02em;
+  margin-top: 1.3em;
+  color: var(--color-gold-soft);
+}
+.md-body p {
+  margin: 0;
+}
+.md-body a {
+  color: var(--color-gold);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(216, 171, 74, 0.4);
+}
+.md-body a:hover {
+  text-decoration-color: var(--color-gold);
+}
+.md-body strong {
+  color: var(--md-strong);
+  font-weight: 650;
+}
+.md-body ul,
+.md-body ol {
+  padding-left: 1.4em;
+}
+.md-body ul {
+  list-style: disc;
+}
+.md-body ol {
+  list-style: decimal;
+}
+.md-body li + li {
+  margin-top: 0.35em;
+}
+.md-body li::marker {
+  color: var(--color-gold);
+}
+.md-body blockquote {
+  border-left: 3px solid var(--color-gold);
+  background: rgba(216, 171, 74, 0.07);
+  padding: 0.7em 1em;
+  border-radius: 0 8px 8px 0;
+  color: var(--color-mist-300);
+}
+.md-body blockquote p + p {
+  margin-top: 0.6em;
+}
+.md-body code {
+  font-family: var(--font-mono-cn);
+  font-size: 0.86em;
+  background: rgba(78, 201, 176, 0.1);
+  color: var(--md-code);
+  padding: 0.12em 0.38em;
+  border-radius: 5px;
+  border: 1px solid rgba(78, 201, 176, 0.16);
+}
+.md-body pre {
+  background: var(--md-pre-bg);
+  border: 1px solid var(--color-ink-700);
+  border-radius: 12px;
+  padding: 1rem 1.1rem;
+  overflow-x: auto;
+  line-height: 1.65;
+}
+.md-body pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--md-pre-text);
+  font-size: 12.8px;
+}
+.md-body table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  display: block;
+  overflow-x: auto;
+}
+.md-body thead {
+  background: var(--color-ink-850);
+}
+.md-body th,
+.md-body td {
+  border: 1px solid var(--color-ink-700);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+.md-body th {
+  font-weight: 600;
+  color: var(--color-gold-soft);
+  white-space: nowrap;
+}
+.md-body tbody tr:nth-child(even) {
+  background: var(--md-stripe);
+}
+.md-body img {
+  max-width: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--color-ink-700);
+  margin: 0.4em 0;
+}
+.md-body hr {
+  border: none;
+  border-top: 1px solid var(--color-ink-700);
+  margin: 2em 0;
+}
+.md-body input[type='checkbox'] {
+  margin-right: 0.4em;
+  accent-color: var(--color-gold);
+}
+
+/* 摘要：同样走 Markdown 渲染，但用小字号 + 次要色 + 紧凑行距，作为标题下的说明文字。
+   必须放在 .md-body 之后，才能覆盖其 15px 字号与正文行距。 */
+.md-summary {
+  font-size: 13px;
+  line-height: 1.75;
+  color: color-mix(in srgb, var(--md-text) 72%, transparent);
+}
+.md-summary > * + * {
+  margin-top: 0.5em;
+}
+.md-summary a {
+  text-underline-offset: 2px;
+}
+.md-summary code {
+  font-size: 12.5px;
+}
+
+/* highlight.js — 精简暗色主题 */
+.hljs-comment,
+.hljs-quote {
+  color: #5b6b80;
+  font-style: italic;
+}
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-literal {
+  color: #c792ea;
+}
+.hljs-string,
+.hljs-doctag {
+  color: #a5d6a7;
+}
+.hljs-number,
+.hljs-symbol {
+  color: #f7a87c;
+}
+.hljs-title,
+.hljs-section,
+.hljs-name {
+  color: #82aaff;
+}
+.hljs-type,
+.hljs-class .hljs-title {
+  color: #ffcb6b;
+}
+.hljs-attr,
+.hljs-attribute,
+.hljs-variable,
+.hljs-template-variable {
+  color: #7fd6c1;
+}
+.hljs-built_in,
+.hljs-builtin-name {
+  color: #8fd3ff;
+}
+.hljs-meta {
+  color: #89a0bd;
+}
+.hljs-deletion {
+  color: #ef5350;
+}
+.hljs-addition {
+  color: #26a37a;
+}
+.hljs-emphasis {
+  font-style: italic;
+}
+.hljs-strong {
+  font-weight: 700;
+}
+
+/* 动效 */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-up {
+  animation: fadeUp 0.35s ease both;
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-ink-850);
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, var(--skeleton-shine), transparent);
+  animation: shimmer 1.6s infinite;
+}
+
+/* ---------- 白天模式（data-theme='light'） ----------
+ *
+ * 这一整块不放进任何 @layer：无层级样式在级联中优先于
+ * Tailwind 的 @layer theme / base / components / utilities，
+ * 因此这里对 --color-* 的覆盖能压过 @theme 在 :root 上的默认值，
+ * 全站工具类与组件类会一次性切换到白天配色。
+ */
+html[data-theme='light'] {
+  color-scheme: light;
+
+  /* 背景层级：页面偏灰 → 卡片纯白 → 柔底/悬停略深 → 边框 */
+  --color-ink-950: #f6f8fb;
+  --color-ink-900: #ffffff;
+  --color-ink-850: #eef2f7;
+  --color-ink-800: #e7ecf3;
+  --color-ink-750: #dfe6ef;
+  --color-ink-700: #d6dee9;
+  --color-ink-600: #b9c6d6;
+
+  /* 文字层级：由深到浅（与夜晚模式的“由亮到暗”相反） */
+  --color-mist-100: #131b26;
+  --color-mist-200: #22303f;
+  --color-mist-300: #364554;
+  --color-mist-400: #4c5b6c;
+  --color-mist-500: #5d6b7d;
+  --color-mist-600: #71808f;
+  --color-mist-700: #8b97a6;
+
+  /* 点缀色整体加深，保证白底可读 */
+  --color-gold: #9c6f1c;
+  --color-gold-soft: #8a6116;
+  --color-jade: #158a72;
+  --color-up: #d43b38;
+  --color-down: #128a63;
+
+  /* 高级学员专属紫色系（Tailwind 默认色为暗底设计，白天加深） */
+  --color-purple-100: #5b21b6;
+  --color-purple-200: #6d28d9;
+  --color-purple-300: #7c3aed;
+
+  /* 状态类薄荷绿（Tailwind 默认色为暗底设计） */
+  --color-emerald-300: #0f8a63;
+  --color-emerald-400: #12a173;
+
+  /* 语义变量 */
+  --shadow-tint: rgba(15, 23, 42, 0.18);
+  --toast-bg: rgba(255, 255, 255, 0.96);
+  --tone-success-fg: #0f7a5c;
+  --tone-success-bd: rgba(18, 138, 98, 0.35);
+  --tone-error-fg: #b3372f;
+  --tone-error-bd: rgba(211, 59, 56, 0.32);
+  --tone-info-fg: #8a6116;
+  --tone-info-bd: rgba(156, 111, 28, 0.32);
+
+  --md-text: #2f3b4a;
+  --md-heading: #101a26;
+  --md-strong: #0b1520;
+  --md-code: #0d6f5b;
+  --md-pre-bg: #f4f7fb;
+  --md-pre-text: #3a4757;
+  --md-stripe: rgba(15, 23, 42, 0.025);
+
+  --skeleton-shine: rgba(15, 23, 42, 0.04);
+
+  --accent-gold: #a2761c;
+  --accent-blue: #3a6fd8;
+  --accent-jade: #16826d;
+  --accent-sand: #a0781e;
+  --accent-purple: #8250c8;
+  --accent-coral: #c9543a;
+  --accent-sky: #3f6fd8;
+}
+
+/* 危险按钮在白底的文字与底色 */
+html[data-theme='light'] .btn-danger {
+  background: rgba(211, 59, 56, 0.08);
+  border-color: rgba(211, 59, 56, 0.32);
+  color: #b3372f;
+}
+html[data-theme='light'] .btn-danger:hover:not(:disabled) {
+  background: rgba(211, 59, 56, 0.16);
+}
+
+/* 选中文本的暖金色在白底稍微压深一点 */
+html[data-theme='light'] ::selection {
+  background: rgba(156, 111, 28, 0.22);
+}
+
+/* ---------- highlight.js — 白天模式语法配色 ---------- */
+html[data-theme='light'] .hljs-comment,
+html[data-theme='light'] .hljs-quote {
+  color: #7a8699;
+}
+html[data-theme='light'] .hljs-keyword,
+html[data-theme='light'] .hljs-selector-tag,
+html[data-theme='light'] .hljs-literal {
+  color: #8b3ec9;
+}
+html[data-theme='light'] .hljs-string,
+html[data-theme='light'] .hljs-doctag {
+  color: #1a7f37;
+}
+html[data-theme='light'] .hljs-number,
+html[data-theme='light'] .hljs-symbol {
+  color: #b35309;
+}
+html[data-theme='light'] .hljs-title,
+html[data-theme='light'] .hljs-section,
+html[data-theme='light'] .hljs-name {
+  color: #1d4ed8;
+}
+html[data-theme='light'] .hljs-type,
+html[data-theme='light'] .hljs-class .hljs-title {
+  color: #a15c07;
+}
+html[data-theme='light'] .hljs-attr,
+html[data-theme='light'] .hljs-attribute,
+html[data-theme='light'] .hljs-variable,
+html[data-theme='light'] .hljs-template-variable {
+  color: #0f766e;
+}
+html[data-theme='light'] .hljs-built_in,
+html[data-theme='light'] .hljs-builtin-name {
+  color: #0369a1;
+}
+html[data-theme='light'] .hljs-meta {
+  color: #64748b;
+}
+
+/* ==========================================================================
+   内容防外流（非管理员）：禁用文本选择。
+   表单控件必须保留可选中，否则无法输入与编辑。
+   配合 App 中的复制/剪切/右键拦截使用（见 components/ContentGuard.tsx）。
+   ========================================================================== */
+body.no-copy {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+body.no-copy input,
+body.no-copy textarea,
+body.no-copy select,
+body.no-copy [contenteditable='true'] {
+  -webkit-user-select: text;
+  user-select: text;
+}

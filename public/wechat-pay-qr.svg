@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="480" viewBox="0 0 480 480" role="img" aria-label="收款码占位图">
+  <rect width="480" height="480" fill="#f4f6fa"/>
+  <rect x="24" y="24" width="432" height="432" rx="16" fill="#ffffff" stroke="#c9d2e0" stroke-width="2" stroke-dasharray="10 8"/>
+  <g fill="none" stroke="#8d97a4" stroke-width="6" stroke-linejoin="round">
+    <rect x="72" y="72" width="96" height="96" rx="8"/>
+    <rect x="312" y="72" width="96" height="96" rx="8"/>
+    <rect x="72" y="312" width="96" height="96" rx="8"/>
+  </g>
+  <g fill="#8d97a4">
+    <rect x="100" y="100" width="40" height="40" rx="4"/>
+    <rect x="340" y="100" width="40" height="40" rx="4"/>
+    <rect x="100" y="340" width="40" height="40" rx="4"/>
+  </g>
+  <text x="240" y="228" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="26" fill="#586678">收款码占位图</text>
+  <text x="240" y="266" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="18" fill="#8d97a4">部署时替换 public/wechat-pay-qr.svg</text>
+</svg>

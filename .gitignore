@@ -1,0 +1,36 @@
+# ---------- 依赖与构建产物 ----------
+node_modules/
+dist/
+dist-ssr/
+*.tsbuildinfo
+
+# ---------- 环境变量（含云服务 endpoint / publishableKey）----------
+.env
+.env.*
+!.env.example
+*.local
+
+# ---------- 日志 ----------
+*.log
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+dev.log
+preview.log
+
+# ---------- 编辑器与系统 ----------
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# ---------- 本地数据与导出（本仓库不提交任何业务数据）----------
+data/
+scripts/output/
+*.sqlite
+*.sqlite3
+*.db
+*.csv
+*.xlsx
+*.parquet

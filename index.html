@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="金融智库 — 知识库、企业分析、市场简报与学习计划一体化平台" />
+    <meta name="theme-color" content="#060910" />
+    <title>金融智库 · 研究与学习平台</title>
+    <script>
+      /* 在样式生效前恢复用户选择的主题，避免刷新时先闪一下夜晚配色 */
+      ;(function () {
+        var theme = 'dark'
+        try {
+          var saved = window.localStorage.getItem('thinktank.theme')
+          if (saved === 'light' || saved === 'dark') theme = saved
+        } catch (e) {
+          /* 隐私模式下 localStorage 不可用，使用默认值 */
+        }
+        document.documentElement.setAttribute('data-theme', theme)
+      })()
+    </script>
+    <style>
+      /*
+       * React 启动前的兜底背景，避免首屏闪白。
+       * --boot-bg / --boot-fg 需与 src/index.css 中 --color-ink-950 的
+       * 日/夜取值保持一致（改色板时两处同步）。
+       */
+      html {
+        --boot-bg: #060910;
+        --boot-fg: #586678;
+      }
+      html[data-theme='light'] {
+        --boot-bg: #f4f6fa;
+        --boot-fg: #8d97a4;
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        background-color: var(--boot-bg);
+      }
+      #boot-fallback {
+        display: flex;
+        min-height: 100vh;
+        align-items: center;
+        justify-content: center;
+        color: var(--boot-fg);
+        font: 13px/1.6 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+      }
+    </style>
+  </head>
+  <body>
+    <noscript>
+      <div style="padding: 40px; color: #aebbcb">本站需要启用 JavaScript 才能运行。</div>
+    </noscript>
+    <div id="root"><div id="boot-fallback">正在加载金融智库…</div></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script>
+      /*
+       * 启动守卫。
+       *
+       * 部署新版本后，浏览器可能仍缓存着上一版的 index.html —— 它引用的 chunk
+       * 已被构建产物替换（文件名带 hash），加载 404 会让 React 根本起不来，
+       * 页面上就是一个纯空白页。这里检测到 #root 迟迟没有被接管时自愈刷新一次，
+       * sessionStorage 保证不会陷入无限刷新。
+       */
+      ;(function () {
+        window.addEventListener('load', function () {
+          setTimeout(function () {
+            var root = document.getElementById('root')
+            if (root && root.childElementCount > 0 && !document.getElementById('boot-fallback')) return
+            try {
+              if (window.sessionStorage.getItem('__boot_retried')) return
+              window.sessionStorage.setItem('__boot_retried', '1')
+            } catch (e) {
+              /* 隐私模式下 sessionStorage 不可用，退化为只刷新一次 */
+            }
+            window.location.reload()
+          }, 3500)
+        })
+      })()
+    </script>
+  </body>
+</html>
