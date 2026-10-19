@@ -1,3 +1,14 @@
+/**
+ * ── 文件：src/lib/utils.ts ──────────────────────────────────────
+ * 功能：纯函数工具：className 合并、日期格式化、相对时间、阅读时长、标题锚点、标签解析、
+ *       手机号归一化 / 校验、视频 URL 解析、错误文案本地化。
+ * 改动指引：
+ *   1. 改日期格式 → formatDate / formatDateTime；
+ *   2. 支持新视频源 → parseVideoUrl（当前识别 B 站 BV 号与直链 mp4）；
+ *   3. 改错误提示措辞 → readableError 的映射表；
+ *   4. 放宽手机号规则 → isMainlandPhone。
+ */
+
 import { clsx, type ClassValue } from 'clsx'
 
 export function cn(...inputs: ClassValue[]) {

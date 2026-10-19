@@ -1,4 +1,14 @@
 /**
+ * ── 文件：src/lib/echarts.ts ────────────────────────────────────
+ * 功能：ECharts 按需注册（只有折线图 + 必要组件 + SVG 渲染器），控制图表包体积。
+ * 改动指引：
+ *   1. 新增图表类型（柱状、饼图、散点）→ 从 echarts/charts 引入并加入 echarts.use([...])，
+ *      否则运行时要么报错要么静默不渲染；
+ *   2. 需要新组件（DataZoom、VisualMap、Title）→ 同样在 echarts/components 里注册；
+ *   3. 换 Canvas 渲染 → 替换 SVGRenderer（导出图片与主题表现会随之变化）。
+ */
+
+/**
  * ECharts 按需引入（统一入口）。
  *
  * 为什么不用 `import * as echarts from 'echarts'`：

@@ -1,3 +1,13 @@
+/**
+ * ── 文件：src/pages/MasterDocPage.tsx ───────────────────────────
+ * 功能：高级学员进阶研报库：资料列表 + 附件下载。
+ * 数据：listMaterials、AssetDownloadLink。
+ * 改动指引：
+ *   1. 改列表项 → MaterialRow 渲染区；
+ *   2. 改附件行为 → AssetDownloadLink；
+ *   3. 内容维护 → 后台 MaterialPanel。
+ */
+
 import { useCallback, useEffect, useState } from 'react'
 import { BookOpen, FileText } from 'lucide-react'
 import { Card, PageHeader, PendingContent } from '../components/PageHeader'
@@ -7,6 +17,7 @@ import { cn, formatDate } from '../lib/utils'
 import { readableError } from '../lib/utils'
 import { listMaterials, type MaterialRow } from '../services/content'
 
+/** 进阶研报库：资料列表 + 附件下载。 */
 export function MasterDocPage() {
   const [rows, setRows] = useState<MaterialRow[]>([])
   const [loading, setLoading] = useState(true)

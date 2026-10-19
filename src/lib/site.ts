@@ -1,3 +1,15 @@
+/**
+ * ── 文件：src/lib/site.ts ───────────────────────────────────────
+ * 功能：站点级常量：品牌名 / Logo 字母 / 主理人、免责声明、两档权益套餐（价格 / 时长 / 权益描述）、
+ *       到期时间推算 extendFrom。
+ * 改动指引：
+ *   1. 换品牌 → SITE.name / subName / logoMark（导航、登录页、页脚都读它）；
+ *   2. 改价格或时长 → PLANS 的 price / priceValue / days（实际成交价以服务端价格表为准，见 PayPage 的 readPrices）；
+ *   3. 改权益描述 → PLANS[].desc；
+ *   4. 改免责声明 → DISCLAIMER；
+ *   5. 改续费折算规则 → extendFrom（默认按 30 天/月）。
+ */
+
 /** 站点级常量：品牌、合规、权益口径 */
 export const SITE = {
   /** 顶部 Logo 用的字母，跟随主理人习惯 */

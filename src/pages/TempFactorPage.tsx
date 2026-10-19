@@ -1,3 +1,14 @@
+/**
+ * ── 文件：src/pages/TempFactorPage.tsx ──────────────────────────
+ * 功能：温度计因子详情：7 个因子 Tab，每个因子一条历史曲线 + 当前分位 + 区间底色。
+ * 数据：market_temp（当日）、market_temp_history（历史序列）。
+ * 改动指引：
+ *   1. 改区间底色 → ZONE_BANDS；
+ *   2. 改坐标轴 / 网格 → CHART_AXIS；
+ *   3. 改因子文案 → lib/thermo.ts 的 FACTOR_META；
+ *   4. 改默认区间 → lib/period.ts 的 DEFAULT_PERIOD。
+ */
+
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { echarts, type EChartsOption } from '../lib/echarts'
@@ -148,6 +159,7 @@ function FactorChart({
   return <div ref={ref} style={{ height: 380 }} className="mt-3 w-full" />
 }
 
+/** 温度计因子详情：7 因子 Tab + 历史曲线。 */
 export function TempFactorPage() {
   const { factor = '' } = useParams()
   const { theme } = useTheme()

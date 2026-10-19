@@ -1,3 +1,14 @@
+/**
+ * ── 文件：src/components/ArticleCard.tsx ────────────────────────
+ * 功能：文章卡片（封面 + 模块徽标 + 摘要）与列表行（含删除按钮），列表页与后台共用。
+ * 数据：MODULE_META 决定模块名称与配色（lib/types.ts）。
+ * 改动指引：
+ *   1. 改卡片信息密度 → ArticleCard 底部的 meta 行；
+ *   2. 改模块名称 / 配色 → lib/types.ts 的 MODULE_META；
+ *   3. 改封面占位渐变 → ArticleCover；
+ *   4. 改行内删除交互 → RowDeleteButton（内部用 useConfirm 做二次确认）。
+ */
+
 import { Link } from 'react-router-dom'
 import { ArrowUpRight, Bookmark, Eye, Star, TrendingDown, TrendingUp } from 'lucide-react'
 import type { ArticleRow } from '../lib/types'
@@ -46,6 +57,7 @@ export function ArticleCover({
   return <SmartImage src={src} alt={article.title} className={cn(ratio, 'w-full object-cover', className)} />
 }
 
+/** 文章卡片：封面 + 模块徽标 + 摘要。 */
 export function ArticleCard({
   article,
   favorite = false,

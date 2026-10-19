@@ -171,6 +171,33 @@ npm run preview    # http://localhost:4173
 
 ---
 
-## 九、许可
+## 九、二次开发：改哪里
+
+`src/` 下每个文件头部都有一段「功能 / 数据 / 改动指引 / 注意」注释块，改代码前先看文件头能少走很多弯路。常见需求速查：
+
+| 我想改… | 文件 | 关键位置 |
+| --- | --- | --- |
+| 品牌名、Logo 字母、页脚 | `src/lib/site.ts` | `SITE` |
+| 配色、字体、涨跌色 | `src/index.css` | `:root` 与 `[data-theme='light']` 两套变量 |
+| 侧边栏菜单 | `src/components/AppShell.tsx` | `MEMBER_NAV` / `MASTER_NAV` |
+| 新增页面 | `src/App.tsx` + `AppShell.tsx` | 路由表 + 菜单（两处都要改） |
+| 套餐价格、权益文案 | `src/lib/site.ts` | `PLANS`（成交价另由服务端价格表决定） |
+| 收款码、管理员微信 | `public/wechat-pay-qr.svg`、`.env.local` | `VITE_ADMIN_WECHAT` |
+| 温度计分区阈值、因子说明 | `src/lib/thermo.ts` | `ZONES` / `FACTOR_META` |
+| 指数与板块配色 | `src/pages/MarketPage.tsx` | `INDEX_META` / `CHART_PALETTE` |
+| 表格列 | `src/pages/CompanyResearchPage.tsx`、`MarketPage.tsx` | 表头与 tbody 需同步修改 |
+| 后台页签 | `src/pages/AdminPage.tsx` | `Tab` 类型 + `TABS` + 渲染分支 |
+| 后台内容表单 | `src/components/AdminContent.tsx` | 六个 `XxxPanel` |
+| 数据表加字段 | `src/lib/types.ts` | 对应 `XxxRow` |
+| 新增接口 / 查询 | `src/services/content.ts` | 参考 `listReviews` 三件套 |
+| 账号与权益逻辑 | `src/services/auth.ts` + `src/context/AuthContext.tsx` | RPC 封装 / 权益判定 |
+| 缓存时长 | `src/services/cache.ts` | `DEFAULT_TTL` |
+| 图表能力（新增图表类型） | `src/lib/echarts.ts` | `echarts.use([...])` 必须注册 |
+
+> 全局约定：天数按 30 天/月折算；涨红跌绿；所有确认交互走 `useConfirm()`；所有图表颜色经 `resolveCssVar()` 解析。
+
+---
+
+## 十、许可
 
 本仓库未附加开源许可，仅用于代码展示与交流。如需引用、二次分发或商用，请先联系作者获得书面许可。

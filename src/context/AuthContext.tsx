@@ -1,3 +1,15 @@
+/**
+ * ── 文件：src/context/AuthContext.tsx ───────────────────────────
+ * 功能：登录态与权益计算中枢。session 存 localStorage（thinktank.session），对外提供
+ *       signIn / signUp / signOut / refresh / admin*；isMemberValid、isMasterValid、daysLeft 是权限判断的唯一来源。
+ * 改动指引：
+ *   1. 改会话存储位置 → STORAGE_KEY（换 key 会让已登录用户掉线）；
+ *   2. 改权益判定口径（如加宽限期）→ isMemberValid / isMasterValid；
+ *   3. AppUser 加字段 → toAppUser 映射 + services/auth 的 AuthRpcRow；
+ *   4. 改登录后跳转 → LoginPage 成功分支的 navigate。
+ * 注意：token 由服务端签发，前端只透传，不要写进日志或 URL。
+ */
+
 import {
   createContext,
   useCallback,
@@ -103,6 +115,7 @@ function readStored(): { session: AccountSession } | null {
   }
 }
 
+/** 登录态 Provider：恢复会话、登录 / 注册 / 登出、管理员操作。 */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false)
   const [user, setUser] = useState<AppUser | null>(null)

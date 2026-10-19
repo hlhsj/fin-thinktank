@@ -1,3 +1,13 @@
+/**
+ * ── 文件：src/pages/CaseListPage.tsx ────────────────────────────
+ * 功能：经典案例分析列表：状态标签（未解锁 / 可看 / 已结束）+ 倒计时。
+ * 数据：listCases。
+ * 改动指引：
+ *   1. 改状态文案 / 配色 → STATUS_TEXT；
+ *   2. 改倒计时口径（按天 / 按小时）→ countdown()；
+ *   3. 改卡片布局 → 列表项结构。
+ */
+
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { CircleDot, PlayCircle, Timer } from 'lucide-react'
@@ -23,6 +33,7 @@ function countdown(target?: string | null) {
   return `${hours} 小时 ${mins} 分钟后开播`
 }
 
+/** 经典案例列表：解锁状态 + 倒计时。 */
 export function CaseListPage() {
   const [rows, setRows] = useState<CaseRow[]>([])
   const [loading, setLoading] = useState(true)

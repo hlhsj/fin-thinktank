@@ -1,3 +1,14 @@
+/**
+ * ── 文件：src/components/ThermometerCard.tsx ────────────────────
+ * 功能：首页 A 股温度计卡片：0-100 读数、分区文案、近一年温度曲线（ECharts）。
+ * 数据：market_temp 表（listMarketTemp），字段 series 里放着历史点。
+ * 改动指引：
+ *   1. 改分区阈值 / 文案 → lib/thermo.ts 的 ZONES（此处只消费，不重复定义）；
+ *   2. 改曲线区间 → TempHoverChart 里的数据切片；
+ *   3. 改卡片布局 → ThermometerCard 的 grid 分区。
+ * 注意：ECharts 不认 CSS 变量，颜色必须经 resolveCssVar 解析成具体色值。
+ */
+
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronRight, Lock, Thermometer } from 'lucide-react'
 import { Link } from 'react-router-dom'
@@ -92,6 +103,7 @@ function TempHoverChart({ points, isLight }: { points: Array<[string, number]>; 
   return <div ref={ref} style={{ height: 110 }} className="w-full" />
 }
 
+/** 温度计卡片：读数、分区文案、近一年温度曲线。 */
 export function ThermometerCard({ data, loading }: { data: MarketTempRow | null; loading: boolean }) {
   const { theme } = useTheme()
   const { user } = useAuth()

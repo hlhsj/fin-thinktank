@@ -1,3 +1,17 @@
+/**
+ * ── 文件：src/components/AdminContent.tsx ───────────────────────
+ * 功能：后台的六个内容面板：DocPanel（学习资料库）、ReviewPanel（复盘文档）、
+ *       CasePanel（经典案例）、MaterialPanel（进阶研报）、CourseVideoPanel（课程回放）、
+ *       CompanyResearchPanel（企业研究表）。每个面板 = 列表 + 新建/编辑表单 + 附件上传。
+ * 改动指引：
+ *   1. 新增内容板块 → 复制一个同构面板，替换 list / save / delete 三个 service，
+ *      再到 AdminPage 的 Tab 联合类型与 TABS 数组注册；
+ *   2. 表单加字段 → 对应输入项 + lib/types.ts 的 Row 类型；
+ *   3. 附件上传 → AssetField / uploadToRef（先写 assets 元数据，再写 asset_blobs 正文）；
+ *   4. 改列表列 → thead 与 tbody 必须同时改，列数对不齐会整体错位。
+ * 注意：本文件不做鉴权，uid + token 由 AdminPage 传入，服务端 RPC 二次校验。
+ */
+
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Eye, ImagePlus, MonitorPlay, Pencil, Plus, Save, Trash2, Upload, X } from 'lucide-react'
 import { Card } from '../components/PageHeader'

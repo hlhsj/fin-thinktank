@@ -1,3 +1,13 @@
+/**
+ * ── 文件：src/pages/ReviewDetailPage.tsx ────────────────────────
+ * 功能：复盘详情页：标题、周期、正文（Markdown）、阅读时长。
+ * 数据：getReview(id)。
+ * 改动指引：
+ *   1. 改顶部信息 → 标题下方 meta 区；
+ *   2. 加上一篇 / 下一篇 → 在 getReview 之外再取相邻周次；
+ *   3. 改正文渲染 → MarkdownView（样式在 Markdown.tsx）。
+ */
+
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, CalendarDays } from 'lucide-react'
@@ -7,6 +17,7 @@ import { MarkdownView } from '../components/Markdown'
 import { formatDate, readableError } from '../lib/utils'
 import { getReview, type ReviewRow } from '../services/content'
 
+/** 复盘详情：正文 + 阅读时长。 */
 export function ReviewDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()

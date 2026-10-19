@@ -1,3 +1,13 @@
+/**
+ * ── 文件：src/components/Markdown.tsx ───────────────────────────
+ * 功能：Markdown 渲染（GFM 表格、代码高亮、图片走 SmartImage），以及纯文本摘要 toPlainText。
+ * 改动指引：
+ *   1. 加 Markdown 语法 → 往 react-markdown 的 remarkPlugins / rehypePlugins 追加；
+ *   2. 改代码块配色 → src/index.css 的 highlight.js 段；
+ *   3. 改图片加载策略 → SmartImage（懒加载 / 失败占位）；
+ *   4. 目录锚点 → 与 lib/utils 的 extractHeadings / slugHeading 保持同一套规则，否则跳转会错位。
+ */
+
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -59,6 +69,7 @@ export function SmartImage({ src, alt, className }: { src?: string; alt?: string
   )
 }
 
+/** Markdown 渲染入口（GFM + 代码高亮 + 智能图片）。 */
 export function MarkdownView({
   content,
   className,

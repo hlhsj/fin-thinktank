@@ -1,3 +1,13 @@
+/**
+ * ── 文件：src/pages/ReviewPage.tsx ──────────────────────────────
+ * 功能：复盘文档库列表（按周组织，显示日期与摘要）。
+ * 数据：listReviews。
+ * 改动指引：
+ *   1. 改卡片信息 → 列表项里的 meta 行；
+ *   2. 改排序 / 过滤 → 组件内对 rows 的 sort / filter；
+ *   3. 内容维护 → 后台 ReviewPanel。
+ */
+
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { CalendarDays, FileText } from 'lucide-react'
@@ -7,6 +17,7 @@ import { cn, formatDate } from '../lib/utils'
 import { readableError } from '../lib/utils'
 import { listReviews, type ReviewRow } from '../services/content'
 
+/** 复盘文档列表（按周组织）。 */
 export function ReviewPage() {
   const [rows, setRows] = useState<ReviewRow[]>([])
   const [loading, setLoading] = useState(true)

@@ -1,3 +1,13 @@
+/**
+ * ── 文件：src/lib/cloud.ts ──────────────────────────────────────
+ * 功能：云服务客户端单例（Auth / Database / Storage / LLM 共用），以及 unwrap() 统一抛错。
+ * 改动指引：
+ *   1. 换后端（自建 PostgREST / Supabase）→ 替换 createWorkBuddyCloud 为对应客户端，
+ *      保持 from()/rpc() 返回 { data, error } 的形态即可，页面层无需改动；
+ *   2. 未配置环境变量时的降级 → PLACEHOLDER_ENDPOINT / PLACEHOLDER_KEY（只为让界面能启动）；
+ *   3. 加请求拦截（自定义 header、埋点）→ 在 SDK 的 fetch 选项里注入。
+ */
+
 import { createWorkBuddyCloud } from '@tencent-ai/workbuddy-cloud-sdk'
 import { cloudConfig, isCloudConfigured } from './config'
 import type { Database } from './database.types'

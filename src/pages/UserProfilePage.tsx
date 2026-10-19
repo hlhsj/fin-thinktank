@@ -1,3 +1,12 @@
+/**
+ * ── 文件：src/pages/UserProfilePage.tsx ─────────────────────────
+ * 功能：个人中心：账号信息、权益到期时间与剩余天数、改绑手机号入口、退出登录。
+ * 改动指引：
+ *   1. 改权益卡片 → ExpiryCard；
+ *   2. 加资料字段 → context/AuthContext 的 AppUser；
+ *   3. 改退出逻辑 → signOut（会清 localStorage 会话）。
+ */
+
 import { Link } from 'react-router-dom'
 import { ArrowLeft, Bell, KeyRound } from 'lucide-react'
 import { Card, Disclaimer, PageHeader } from '../components/PageHeader'
@@ -38,6 +47,7 @@ function ExpiryCard({
   )
 }
 
+/** 个人中心：账号信息、权益到期、改绑入口。 */
 export function UserProfilePage() {
   const { user } = useAuth()
   const master = isMasterValid(user)

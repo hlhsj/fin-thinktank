@@ -1,3 +1,13 @@
+/**
+ * ── 文件：src/lib/thermo.ts ─────────────────────────────────────
+ * 功能：温度计领域常量与工具：五档分区 ZONES、7 因子元数据 FACTOR_META、series 解析、
+ *       CSS 变量取值 resolveCssVar。
+ * 改动指引：
+ *   1. 改分区阈值 / 名称 / 颜色 → ZONES（阈值 20/40/60/80，颜色建议用 --color-up 等变量）；
+ *   2. 加 / 删因子 → FACTOR_META 加条目，同时服务端 series.factors 必须有同名字段，否则详情页空白；
+ *   3. 改因子说明 → FACTOR_META[].desc（因子详情页直接渲染）。
+ */
+
 import type { MarketTempRow } from './types'
 
 /**

@@ -1,3 +1,11 @@
+/**
+ * ── 文件：src/components/ErrorBoundary.tsx ──────────────────────
+ * 功能：渲染错误兜底，避免单个组件抛错导致整页白屏；提供刷新与返回首页。
+ * 改动指引：
+ *   1. 改兜底文案 / 样式 → 组件 render 分支；
+ *   2. 接监控 → 在 componentDidCatch 里上报（Sentry 等）。
+ */
+
 import { Component, type ErrorInfo, type ReactNode } from 'react'
 import { AlertTriangle, RefreshCw } from 'lucide-react'
 

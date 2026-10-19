@@ -1,3 +1,14 @@
+/**
+ * ── 文件：src/pages/DocLibraryPage.tsx ──────────────────────────
+ * 功能：学习资料库：章节树 + Markdown 正文 + 术语表（glossary）检索。
+ * 数据：listChapters、listGlossary。
+ * 改动指引：
+ *   1. 改章节分组 / 排序 → 组件内 chapters 的排序逻辑；
+ *   2. 加正文目录 → 用 lib/utils 的 extractHeadings；
+ *   3. 改术语表展示 → listGlossary 返回值渲染区。
+ * 注意：本页只读，章节内容维护在后台 AdminContent 的 DocPanel。
+ */
+
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { BookOpen, Bookmark, Search } from 'lucide-react'
 import { Card, PageHeader, PendingContent } from '../components/PageHeader'
@@ -9,6 +20,7 @@ import { useAuth } from '../context/AuthContext'
 
 type Tab = 'chapters' | 'glossary'
 
+/** 学习资料库：章节树 + Markdown 正文 + 术语表检索。 */
 export function DocLibraryPage() {
   // 章节正文属付费内容：读取需带登录时签发的服务端令牌（见 AuthContext）
   const { user } = useAuth()

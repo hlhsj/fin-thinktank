@@ -1,3 +1,13 @@
+/**
+ * ── 文件：src/pages/CaseDetailPage.tsx ──────────────────────────
+ * 功能：案例详情：正文 + 内嵌视频（B 站 iframe 或直链 mp4）。
+ * 数据：getCase(id)。
+ * 改动指引：
+ *   1. 改播放器 → 视频分支（parseVideoUrl 返回 bilibili / file / null 三种）；
+ *   2. 改正文区域 → MarkdownView 上方信息块；
+ *   3. 改附件 → useResolvedSrc 处理 asset-id:// 引用。
+ */
+
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, ExternalLink, Video } from 'lucide-react'
@@ -8,6 +18,7 @@ import { MarkdownView } from '../components/Markdown'
 import { formatDateTime, readableError } from '../lib/utils'
 import { getCase, type CaseRow } from '../services/content'
 
+/** 案例详情：正文 + 内嵌视频（B 站 / mp4）。 */
 export function CaseDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()

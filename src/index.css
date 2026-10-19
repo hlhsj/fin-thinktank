@@ -1,3 +1,15 @@
+/*
+ * ── 文件：src/index.css ─────────────────────────────────────────
+ * 功能：全站设计令牌与基础样式。:root 是夜晚主题，html[data-theme='light'] 覆盖为白天主题，
+ *       Tailwind v4 通过 @theme 把变量映射成工具类（bg-ink-950 / text-mist-100 / text-gold 等）。
+ * 改动指引：
+ *   1. 改主色 → --color-gold / --color-jade；
+ *   2. 改涨跌色 → --color-up（红）/ --color-down（绿），A 股习惯红涨绿跌，勿反；
+ *   3. 改字体 → --font-serif-cn / --font-sans-cn；
+ *   4. 新增语义色 → :root 与 [data-theme='light'] 两处都加，再到 @theme 登记才会生成工具类。
+ * 注意：白天主题的覆盖块必须留在 @layer 之外（unlayered），否则会被工具类压过。
+ */
+
 @import 'tailwindcss';
 
 @theme {

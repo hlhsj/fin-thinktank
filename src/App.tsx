@@ -1,3 +1,17 @@
+/**
+ * ── 文件：src/App.tsx ───────────────────────────────────────────
+ * 功能：路由总表 + 三层权限门。HashRouter 下分公开区（登录 / 续费）、会员区（MEMBER）、
+ *       高级会员区（MASTER），每层用 RequireMember / RequireMaster 做权益拦截。
+ * 数据：权限判断来自 context/AuthContext 的 isMemberValid / isMasterValid。
+ * 改动指引：
+ *   1. 新增页面 → 顶部用 lazy() 引入（页面是命名导出，需 .then(m => ({ default: m.Xxx }))），
+ *      再在对应 <Routes> 里加 <Route>；
+ *   2. 调整权益门槛 → RequireMember / RequireMaster 内的判断；
+ *   3. 改默认落地页 → 末尾 <Route path="*" element={<Navigate to="/member" />} />；
+ *   4. 加顶级分区 → 参考 MasterRoutes 的嵌套写法。
+ * 注意：页面必须懒加载，否则 echarts / markdown 会被打进首屏。
+ */
+
 import { lazy, Suspense, useEffect } from 'react'
 import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { AuthProvider, isMasterValid, isMemberValid, useAuth } from './context/AuthContext'

@@ -1,3 +1,12 @@
+/**
+ * ── 文件：src/components/AssetLink.tsx ──────────────────────────
+ * 功能：附件下载链接 + asset-id:// 引用解析。附件正文以 base64 存在 asset_blobs，这里按需拉取并转 objectURL。
+ * 改动指引：
+ *   1. 改附件展示样式 → AssetDownloadLink；
+ *   2. 改解析缓存 → useResolvedSrc 内的 Map（同一素材一屏只解析一次）；
+ *   3. 换存储方案（如对象存储）→ 只改 useResolvedSrc 的实现，调用方无需改动。
+ */
+
 import { useEffect, useState } from 'react'
 import { Download } from 'lucide-react'
 import { isAssetRef, resolveAssetUrl, stripAssetRef } from '../services/storage'

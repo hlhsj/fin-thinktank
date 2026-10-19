@@ -1,3 +1,12 @@
+/**
+ * ── 文件：src/lib/types.ts ──────────────────────────────────────
+ * 功能：全站行类型（与数据库表一一对应）+ 内容模块元数据 MODULE_META + 评级 / 计划分类等枚举。
+ * 改动指引：
+ *   1. 表加字段 → 对应 XxxRow 加字段（可空用 | null，新建时可选用 ?）；
+ *   2. 改模块名称 / 配色 → MODULE_META；
+ *   3. 加下拉选项 → RATING_OPTIONS、PLAN_CATEGORIES。
+ */
+
 export type ModuleKey = 'knowledge' | 'company' | 'briefing'
 export type ArticleStatus = 'draft' | 'published' | 'archived'
 

@@ -1,3 +1,11 @@
+/**
+ * ── 文件：src/context/ThemeContext.tsx ──────────────────────────
+ * 功能：主题状态（dark / light）+ localStorage 持久化 + 同步 <html data-theme> 与 meta theme-color。
+ * 改动指引：
+ *   1. 加第三套主题 → Theme 联合类型 + index.css 新增 [data-theme='xxx'] 块 + META_COLOR；
+ *   2. 改默认主题 → readStoredTheme 的兜底值，同时改 index.html 内联脚本里的默认值（两处必须一致）。
+ */
+
 import {
   createContext,
   useCallback,
@@ -44,6 +52,7 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null)
 
+/** 主题 Provider：读写 localStorage 并同步 <html data-theme>。 */
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(() => readStoredTheme())
 

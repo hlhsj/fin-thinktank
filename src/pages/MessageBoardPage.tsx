@@ -1,3 +1,13 @@
+/**
+ * ── 文件：src/pages/MessageBoardPage.tsx ────────────────────────
+ * 功能：学员留言板：发布留言（上限 500 字）、列表、管理员回复与置顶展示。
+ * 数据：listMessages、createMessage。
+ * 改动指引：
+ *   1. 改字数上限 → MAX_LEN；
+ *   2. 改排序 / 分页 → listMessages 的入参；
+ *   3. 回复与置顶 → 后台 AdminPage 的留言回复面板。
+ */
+
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Lock, MessageCircle, Send } from 'lucide-react'
 import { Card, PageHeader } from '../components/PageHeader'
@@ -9,6 +19,7 @@ import { createMessage, listMessages, type MessageRow } from '../services/conten
 
 const MAX_LEN = 500
 
+/** 学员留言板：发布 + 列表 + 管理员回复展示。 */
 export function MessageBoardPage() {
   const { user } = useAuth()
   const toast = useToast()

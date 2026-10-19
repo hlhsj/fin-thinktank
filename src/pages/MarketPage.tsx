@@ -1,3 +1,17 @@
+/**
+ * ── 文件：src/pages/MarketPage.tsx ──────────────────────────────
+ * 功能：A 股市场数据主页面：4 大指数平均 PE 与历史分位、地域 / 行业板块 PE 表格与走势图、
+ *       数据缺口提示。
+ * 数据：pe_index、pe_industry、pe_industry_daily、pe_extreme。
+ * 改动指引：
+ *   1. 加 / 换指数 → INDEX_META（code / name / 双主题配色）；
+ *   2. 改图表配色 → CHART_PALETTE；
+ *   3. 改缺口判定 → GAP_DAYS（默认 15 天，覆盖春节长假；太大会漏报，太小会误报）；
+ *   4. 改表格列 → 表头 IndSortTh 与 tbody 同步；
+ *   5. 改免责声明 → 文件内 DISCLAIMER。
+ * 注意：缺失交易区间必须留空（connectNulls: false），否则曲线会横穿休市期，视觉上制造连续趋势。
+ */
+
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { echarts, type EChartsOption } from '../lib/echarts'
 import { ChevronDown, ChevronUp } from 'lucide-react'

@@ -1,3 +1,15 @@
+/**
+ * ── 文件：src/pages/PayPage.tsx ─────────────────────────────────
+ * 功能：续费 / 开通页：套餐与份数选择（受 390 天权益上限约束）、下单、收款码、加管理员微信。
+ * 数据：readPrices（服务端价格）、createOrder。
+ * 改动指引：
+ *   1. 换收款码 → 替换 public/wechat-pay-qr.svg（换扩展名时同步改 QR_SRC）；
+ *   2. 改管理员微信 → .env.local 的 VITE_ADMIN_WECHAT，不要写死在代码里；
+ *   3. 改套餐 / 价格 → lib/site.ts 的 PLANS + 后台「价格设置」；
+ *   4. 改时长上限 / 可购份数 → TOTAL_LIMIT_DAYS / PLAN_MAX_QTY（服务端同样校验，必须同步改）；
+ *   5. 接支付网关 → 在 createOrder 之后接回调确认，替代人工对账。
+ */
+
 import { useEffect, useState } from 'react'
 import { Check, Crown, ShieldCheck, X } from 'lucide-react'
 import { Card, PageHeader } from '../components/PageHeader'
@@ -36,6 +48,7 @@ interface SubmittedOrder {
   quantity: number
 }
 
+/** 续费 / 开通：套餐与份数、下单、收款码。 */
 export function PayPage() {
   const { user, refresh } = useAuth()
   const toast = useToast()

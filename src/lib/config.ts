@@ -1,4 +1,13 @@
 /**
+ * ── 文件：src/lib/config.ts ─────────────────────────────────────
+ * 功能：读取 .env.local 的三个云服务参数，导出 cloudConfig 与 isCloudConfigured。
+ * 改动指引：
+ *   1. 新增配置项 → 这里加字段，同时更新 .env.example（Vite 只暴露 VITE_ 前缀的变量）；
+ *   2. 改 host 校验逻辑 → isCloudConfigured；
+ *   3. 不要把真实 endpoint / key 写回代码 —— 公开仓库只留占位。
+ */
+
+/**
  * 云服务连接配置。
  *
  * 本仓库**不包含**任何真实环境凭据。运行前请复制 `.env.example` 为 `.env.local`

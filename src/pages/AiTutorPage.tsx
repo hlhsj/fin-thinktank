@@ -1,3 +1,12 @@
+/**
+ * ── 文件：src/pages/AiTutorPage.tsx ─────────────────────────────
+ * 功能：AI 助教占位页（推荐问题 + 说明），当前不提供可交互输入。
+ * 改动指引：
+ *   1. 接入模型 → 用 cloud.llm 或自有接口，替换下方静态卡片为消息列表 + 输入框；
+ *   2. 改开场白 → OPENING；
+ *   3. 改推荐问题 → RECOMMENDED。
+ */
+
 import { useState } from 'react'
 import { Sparkles } from 'lucide-react'
 import { Card, Disclaimer, PageHeader } from '../components/PageHeader'
@@ -14,6 +23,7 @@ const RECOMMENDED = [
 
 const OPENING = '你好，我是智库 AI 助教，可以问我课程内容、工具使用相关的问题。'
 
+/** AI 助教占位页（当前只展示推荐问题，无输入交互）。 */
 export function AiTutorPage() {
   const [messages, setMessages] = useState<Array<{ role: 'ai' | 'me'; text: string }>>([
     { role: 'ai', text: OPENING },
