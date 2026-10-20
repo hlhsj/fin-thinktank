@@ -203,6 +203,35 @@ npm run preview    # http://localhost:4173
 
 ---
 
-## 十、许可
+## 十、发版流程
+
+版本号写在 `package.json`，每次发版同步更新 `CHANGELOG.md`，然后推标签即可，GitHub Actions 会自动完成「类型检查 → 构建 → 创建 Release」：
+
+```bash
+# 1. 改版本号与更新日志
+#    package.json  version: 1.2.0
+#    CHANGELOG.md  新增 "## v1.2.0 — YYYY-MM-DD" 段落
+
+# 2. 提交
+git add -A && git commit -m "feat: xxx（v1.2.0）"
+
+# 3. 打标签并推送（标签格式必须是 v 开头，如 v1.2.0）
+git tag -a v1.2.0 -m "v1.2.0 — 一句话说明"
+git push origin main
+git push origin v1.2.0
+```
+
+工作流 `.github/workflows/release.yml` 的行为：
+
+- 触发：推送 `v*` 标签，或在 Actions 页面手动运行（可指定任意已有标签，用于补建/修正发行说明）
+- 门禁：`npm ci` → `npm run typecheck` → `npm run build`，任一步失败都不发版
+- 发行说明：自动截取 `CHANGELOG.md` 中对应版本的段落作为 Release 正文
+- 附件：GitHub 自动附带该标签的源码 zip / tar.gz
+
+> 手动补建：Actions → Release → Run workflow → 填标签（如 `v1.1.0`）。若该版本 Release 已存在，会改为更新其发行说明。
+
+---
+
+## 十一、许可
 
 本仓库未附加开源许可，仅用于代码展示与交流。如需引用、二次分发或商用，请先联系作者获得书面许可。
