@@ -1,23 +1,33 @@
 name: Release
 
-# 触发方式：推送 v* 标签（如 v1.1.0）时自动构建并创建 GitHub Release
+# 两种触发方式：
+#   1. 推送 v* 标签（如 v1.1.0）—— 日常发版走这条
+#   2. 手动触发（Actions → Release → Run workflow）—— 用于补建或修正某个版本的发行说明
 on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: '要创建或更新 Release 的标签，例如 v1.1.0'
+        required: true
+        type: string
 
-# 创建 Release 需要写 contents；其余权限一律不申请
+# 创建 / 编辑 Release 需要写 contents；其余权限不申请
 permissions:
   contents: write
 
 jobs:
   release:
     runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
         with:
-          # 生成 release notes 需要完整历史与上一个标签
+          # 生成对比链接与读取完整 CHANGELOG 需要完整历史
           fetch-depth: 0
 
       - name: 准备 Node
@@ -36,11 +46,33 @@ jobs:
       - name: 构建
         run: npm run build
 
-      - name: 创建 Release
+      - name: 从 CHANGELOG 抽取本版说明
+        run: |
+          python3 - <<'PY'
+          import os, re, pathlib
+          tag = os.environ["TAG"]
+          text = pathlib.Path("CHANGELOG.md").read_text(encoding="utf-8")
+          # 匹配 "## v1.1.0" 到下一个 "## " 之间的内容
+          pattern = rf"^##\s+{re.escape(tag)}\b[^\n]*\n(.*?)(?=^##\s|\Z)"
+          m = re.search(pattern, text, re.M | re.S)
+          body = (m.group(1).strip() if m else "")
+          if not body:
+              body = f"本版说明见 [CHANGELOG.md](../blob/main/CHANGELOG.md) 中的 {tag} 条目。"
+          pathlib.Path("RELEASE_NOTES.md").write_text(body + "\n", encoding="utf-8")
+          print(pathlib.Path("RELEASE_NOTES.md").read_text(encoding="utf-8")[:400])
+          PY
+
+      - name: 创建或更新 Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" \
-            --title "$GITHUB_REF_NAME" \
-            --generate-notes \
-            --verify-tag
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG 已存在，更新发行说明"
+            gh release edit "$TAG" --notes-file RELEASE_NOTES.md
+          else
+            echo "创建 Release $TAG"
+            gh release create "$TAG" \
+              --title "$TAG" \
+              --notes-file RELEASE_NOTES.md \
+              --verify-tag
+          fi
