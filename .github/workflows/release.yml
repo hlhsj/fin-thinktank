@@ -1,0 +1,46 @@
+name: Release
+
+# 触发方式：推送 v* 标签（如 v1.1.0）时自动构建并创建 GitHub Release
+on:
+  push:
+    tags:
+      - 'v*'
+
+# 创建 Release 需要写 contents；其余权限一律不申请
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          # 生成 release notes 需要完整历史与上一个标签
+          fetch-depth: 0
+
+      - name: 准备 Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 安装依赖
+        run: npm ci
+
+      # 构建作为发布门禁：类型或构建失败就不发版
+      - name: 类型检查
+        run: npm run typecheck
+
+      - name: 构建
+        run: npm run build
+
+      - name: 创建 Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes \
+            --verify-tag
