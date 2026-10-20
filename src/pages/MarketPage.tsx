@@ -16,6 +16,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { echarts, type EChartsOption } from '../lib/echarts'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { Card, PageHeader } from '../components/PageHeader'
+import { ThermometerCard } from '../components/ThermometerCard'
 import { EmptyState, Spinner } from '../components/ui'
 import { useTheme } from '../context/ThemeContext'
 import { cn, readableError } from '../lib/utils'
@@ -30,6 +31,7 @@ import {
 import { useCachedResource } from '../lib/useCachedResource'
 import { cacheKey } from '../services/cache'
 import {
+  listMarketTemp,
   listPeDataGap,
   listPeExtreme,
   listPeIndex,
@@ -43,16 +45,18 @@ import {
 } from '../services/content'
 
 /**
- * A 股市场数据 · 市盈率 TTM 专题
+ * A 股市场数据 · 市场温度 + 市盈率 TTM 专题
  *
- * 核心：上证指数、深证成指、创业板指、科创50 的历史 PE-TTM 走势（日频，前三只自
- *       2015-01-05、科创50 自 2020-07-23 起；2006-2009 已按要求剔除，勿加回），
- *       历史最低/最高位由前端按全量日频数据实时计算，并给出「当前分位」；走势图支持选择时间段浏览。
- * 地域/行业：同花顺地域指数 882001~882033 / 同花顺一级行业（通达信 881xxx）的当日 PE-TTM 与总市值。
+ * 页面结构（2026-10-20 起，顶部并入原首页「A股温度计」）：
+ *   ① A股温度计（ThermometerCard）：7 因子等权百分位合成 0-100 市场温度，可点因子看独立走势；
+ *   ② 四大指数历史 PE-TTM 走势（日频，前三只自 2015-01-05、科创50 自 2020-07-23 起；
+ *      2006-2009 已按要求剔除，勿加回），历史最低/最高位给出「当前分位」，走势图可选时间段；
+ *   ③ 地域/宏观行业指数 PE：**界面暂时隐藏**（见 SHOW_BOARD_PE），数据表与每日更新流程
+ *      全部保留作储备，未来完善时把开关改回 true 即可恢复，无需再写代码。
  *
  * 数据口径：日频。指数来源通达信指数历史估值接口（period=1 日频），板块来源 iFinD；
- *           两个表均由每交易日收盘后定时任务自动更新（23:20，入口
- *           scripts/daily-pe-update.mjs + scripts/fetch-pe-boards.mjs --repair）。
+ *           温度计与指数/板块数据由同一个定时任务在每交易日收盘后更新（23:20，
+ *           入口 scripts/market-daily-all.sh）。
  * 配色：color 为夜晚模式取值，colorLight 为白天模式取值（白底需整体加深）。
  */
 
@@ -77,7 +81,16 @@ const CHART_PALETTE = {
 }
 
 const DISCLAIMER =
-  '免责声明：本页为客观历史数据统计（指数与行业的市盈率 TTM、历史极值与当前分位），仅用于数据查阅与学习参考，不代表任何观点或判断，不构成任何投资建议。'
+  '免责声明：本页为客观历史数据统计（市场温度与四大指数的市盈率 TTM、历史极值与当前分位），仅用于数据查阅与学习参考，不代表任何观点或判断，不构成任何投资建议。'
+
+/**
+ * 地域指数 / 宏观行业指数 PE 界面开关（2026-10-20 应用户要求暂时隐藏）。
+ *
+ * 隐藏的只是前端界面：数据库表 pe_industry / pe_industry_daily / pe_data_gap 与
+ * 每日更新流程全部保留，数据继续滚动更新，作为「未来重新完善时的储备」。
+ * 需要恢复时把这里改为 true 即可 —— 下方相关状态、数据资源、表格与走势图代码均未删除。
+ */
+const SHOW_BOARD_PE = false
 
 function fmt(v: number | null | undefined, digits = 2) {
   return v === null || v === undefined || !Number.isFinite(Number(v)) ? '—' : Number(v).toFixed(digits)
@@ -511,6 +524,8 @@ export function MarketPage(_props: { view?: 'today' | 'history' } = {}) {
   const sinceRecent = useMemo(() => shiftMonths(new Date().toISOString().slice(0, 10), 13), [])
 
   // ---- 数据资源：各自独立缓存与加载态；命中会话缓存时不阻塞渲染 ----
+  /** A股温度计快照（2026-10-20 由首页并入本页顶部；7 因子/走势的权益分级在组件内处理） */
+  const tempRes = useCachedResource(cacheKey('market:temp'), listMarketTemp)
   const idxRes = useCachedResource(
     cacheKey('pe:index:recent'),
     useCallback(() => listPeIndex({ since: sinceRecent }), [sinceRecent]),
@@ -518,14 +533,14 @@ export function MarketPage(_props: { view?: 'today' | 'history' } = {}) {
   /** 历史极值表（67 行）——表格的「历史最低/最高位」直接读它，不再拉全量现算 */
   const extremeRes = useCachedResource(cacheKey('pe:extreme'), listPeExtreme)
   /** 数据缺口备注（极少行）——决定缺口色块标「区间值为负数」还是「数据缺失」 */
-  const gapRes = useCachedResource(cacheKey('pe:datagap'), listPeDataGap)
+  const gapRes = useCachedResource(SHOW_BOARD_PE ? cacheKey('pe:datagap') : null, listPeDataGap)
   const gapNotes = gapRes.data ?? []
   const regionRes = useCachedResource(
-    cacheKey('pe:industry:region'),
+    SHOW_BOARD_PE ? cacheKey('pe:industry:region') : null,
     useCallback(() => listPeIndustry('region'), []),
   )
   const macroRes = useCachedResource(
-    cacheKey('pe:industry:industry'),
+    SHOW_BOARD_PE ? cacheKey('pe:industry:industry') : null,
     useCallback(() => listPeIndustry('industry'), []),
   )
 
@@ -560,7 +575,9 @@ export function MarketPage(_props: { view?: 'today' | 'history' } = {}) {
 
   /** 板块历史序列：按需加载 + 跟随时间段（近一年取窗口，长时段取该板块全量） */
   const boardRes = useCachedResource(
-    boardCode ? cacheKey('pe:board', indTab, boardCode, needsFull ? 'full' : 'recent') : null,
+    SHOW_BOARD_PE && boardCode
+      ? cacheKey('pe:board', indTab, boardCode, needsFull ? 'full' : 'recent')
+      : null,
     useCallback(
       () => listPeIndustryDaily(indTab, boardCode, needsFull ? {} : { since: sinceRecent }),
       [indTab, boardCode, needsFull, sinceRecent],
@@ -690,10 +707,13 @@ export function MarketPage(_props: { view?: 'today' | 'history' } = {}) {
       <PageHeader
         eyebrow="A-Share Market Data"
         title="市场数据"
-        desc={`指数与行业市盈率 TTM · 每交易日收盘后自动更新${latestDate ? ` · 数据截至 ${latestDate}` : ''}`}
+        desc={`A股温度计 + 四大指数市盈率 TTM · 每交易日收盘后自动更新${latestDate ? ` · 数据截至 ${latestDate}` : ''}`}
       />
 
       {/* 说明：各区块使用独立的数据资源与加载态，命中会话缓存时直接渲染、不阻塞 */}
+
+      {/* A股温度计（2026-10-20 由首页并入本页最上方；权益分级在组件内处理） */}
+      <ThermometerCard data={tempRes.data} loading={tempRes.loading && !tempRes.data} />
 
       {/* 核心：四指数当日 PE 与历史最低 */}
           <Card padded={false}>
@@ -701,7 +721,8 @@ export function MarketPage(_props: { view?: 'today' | 'history' } = {}) {
               <h2 className="text-[14.5px] text-mist-100">四大指数市盈率 TTM</h2>
               <p className="mt-0.5 text-[11.5px] text-mist-700">
                 历史最低/最高位为 2015 年以来（科创50 自 2020 年指数基日起）每个交易日数据中的极值，右侧为当日 PE-TTM 在历史最低与历史最高之间的分位（0% = 历史最低位，100% = 历史最高位）；
-                末行「四大指数平均」为算术平均，<b className="text-mist-500">科创50 的 PE 长期显著高于其余三个指数、会明显抬高均值</b>，横向对比时建议以各指数自身的分位为准
+                末行「四大指数平均」为算术平均，<b className="text-mist-500">科创50 的 PE 长期显著高于其余三个指数、会明显抬高均值</b>，横向对比时建议以各指数自身的分位为准；
+                若某指数的当日值与当日涨跌明显不符（口径校验未通过），该指数会暂显示上一交易日值并在行内标注日期
               </p>
             </div>
             <div className="overflow-x-auto">
@@ -737,6 +758,15 @@ export function MarketPage(_props: { view?: 'today' | 'history' } = {}) {
                           <i className="h-2 w-2 rounded-full" style={{ background: row.color }} />
                           <span className="text-mist-100">{row.name}</span>
                           <span className="text-[11px] text-mist-700">{row.code}</span>
+                          {/* 当日值未通过口径校验的指数会保留上一交易日值（目前是上证指数），必须标明日期避免误读 */}
+                          {row.latest && latestDate && row.latest.pe_date !== latestDate ? (
+                            <span
+                              className="rounded border border-ink-700 px-1 py-0.5 text-[10px] text-mist-700"
+                              title="该指数当日值未通过「PE 变动 ≈ 指数涨跌」口径校验，暂显示最近一个已确认交易日"
+                            >
+                              {row.latest.pe_date.slice(5)}
+                            </span>
+                          ) : null}
                         </span>
                       </td>
                       <td className="px-3 py-3 text-right text-[14px] font-semibold tabular-nums text-mist-100">
@@ -809,6 +839,10 @@ export function MarketPage(_props: { view?: 'today' | 'history' } = {}) {
             )}
           </Card>
 
+      {/* 次要：地域指数 / 宏观行业指数 PE —— 界面暂时隐藏（SHOW_BOARD_PE=false），
+          数据表与每日更新流程保留作储备；恢复显示只需把开关改回 true */}
+      {SHOW_BOARD_PE && (
+          <>
           {/* 次要：33 个行业 */}
           <Card padded={false}>
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-ink-700 px-4 py-3">
@@ -969,15 +1003,16 @@ export function MarketPage(_props: { view?: 'today' | 'history' } = {}) {
               </p>
             ) : null}
           </Card>
+          </>
+      )}
 
           <p className="rounded-xl border border-ink-700 bg-ink-900 px-4 py-3 text-[11.5px] leading-relaxed text-mist-700">
             <b className="text-mist-500">⚠ 口径说明：</b>
             四大指数取 2015 年以来（科创50 自 2020 年基日起）每个交易日的市盈率 TTM，
             历史最低/最高位为同一区间内的极值；「当前分位」= (当日值 − 历史最低) ÷ (历史最高 − 历史最低) × 100%，
             0% 对应历史最低位、100% 对应历史最高位；当某指数创出历史新高或新低时，历史最高/最低位会随当日数据同步刷新。
-            地域/行业表格可在「地域指数」（同花顺地域 882001~882033）与「宏观行业」（同花顺一级行业）之间切换；
-            点击表头「总市值 / 当日 PE-TTM」可按该列升降序排列，空值统一排在末尾。
-            地域/行业板块自 2020-07-01 起保留日频历史，可用下方走势图任选单个板块查看。
+            页面顶部的「A股温度计」由市场动量 / 成交活跃度 / 波动率反向 / 风险偏好 / 大小盘风格 / 赚钱效应 / 融资融券
+            共 7 个因子各自标准化为 0-100 历史百分位后等权合成，温度越低越恐慌、越高越贪婪，与指数估值数据同源更新。
             全部数据均在每个交易日收盘后自动更新，表中「当日 PE-TTM」即最近一个交易日的数值。
           </p>
           <p className="rounded-xl border border-dashed border-ink-700 bg-ink-900 px-4 py-3 text-[11.5px] leading-relaxed text-mist-700">

@@ -232,10 +232,10 @@ export function TempFactorPage() {
     return (
       <EmptyState
         title="未知的因子"
-        desc="请从首页温度计的因子格子进入对应的历史走势页。"
+        desc="请从「A股市场数据」页顶部的温度计因子格子进入对应的历史走势页。"
         action={
-          <Link to="/member" className="btn btn-primary">
-            返回首页
+          <Link to="/member/market" className="btn btn-primary">
+            返回市场数据页
           </Link>
         }
       />
@@ -249,9 +249,9 @@ export function TempFactorPage() {
         title={meta.label}
         desc={meta.desc}
         right={
-          <Link to="/member" className="btn btn-ghost">
+          <Link to="/member/market" className="btn btn-ghost">
             <ArrowLeft size={14} />
-            返回首页
+            返回市场数据页
           </Link>
         }
       />

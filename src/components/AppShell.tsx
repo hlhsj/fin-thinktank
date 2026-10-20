@@ -16,6 +16,7 @@ import {
   BookOpen,
   Bot,
   Building2,
+  Calculator,
   ChevronRight,
   ClipboardCheck,
   FileText,
@@ -49,12 +50,13 @@ const MEMBER_NAV: NavItem[] = [
   { to: '/member/market', label: 'A股市场数据', icon: LineChart },
   { to: '/member/message', label: '学员留言板', icon: MessageSquare },
   { to: '/member/research', label: '企业研究表', icon: Building2 },
-  { to: '/member/ai', label: 'AI 问答', icon: Bot },
+  { to: '/member/valuation', label: '估值实验室', icon: Calculator },
 ]
 
 const MASTER_NAV: NavItem[] = [
+  { to: '/member/master/ai', label: 'AI 问答', master: true, icon: Bot },
   { to: '/member/master/doc', label: '进阶研报库', master: true, icon: BookOpen },
-  { to: '/member/master/culture', label: '顶级投研能力培养', master: true, icon: FlaskConical },
+  { to: '/member/master/culture', label: '投研能力培养', master: true, icon: FlaskConical },
   { to: '/member/master/homework', label: '高级学员作业', master: true, icon: ClipboardCheck },
 ]
 
@@ -91,7 +93,8 @@ export function AppShell({ children }: { children: ReactNode }) {
             <span className="serif flex h-9 w-9 items-center justify-center rounded-xl border border-gold/40 bg-gradient-to-br from-gold/25 to-transparent text-[18px] text-gold-soft">
               {SITE.logoMark}
             </span>
-            <span className="hidden leading-tight sm:block">
+            {/* xl~2xl 之间只留图标：导航已 12 项，1440px 下 logo 文字会挤掉「投研能力培养」 */}
+            <span className="hidden leading-tight sm:block xl:hidden 2xl:block">
               <span className="serif block text-[15.5px] tracking-wide text-mist-100">
                 {SITE.name}
                 <span className="text-gold-soft"> · {SITE.subName}</span>
@@ -102,8 +105,10 @@ export function AppShell({ children }: { children: ReactNode }) {
 
           <nav className="hidden min-w-0 flex-1 items-center gap-0.5 overflow-x-auto xl:flex">
             {navGroups.map((group) => (
-              <div key={group.title} className="flex items-center gap-0.5">
-                <span className="px-2 text-[10.5px] uppercase tracking-[0.14em] text-mist-700">
+              <div key={group.title} className="flex shrink-0 items-center gap-0.5">
+                {/* shrink-0 + nowrap 防止被压成竖排；2xl 以下隐藏分组标题——
+                    导航已 12 项，1440px 宽度放不下两个标题（实测「高级学」被截断） */}
+                <span className="hidden shrink-0 whitespace-nowrap px-2 text-[10.5px] uppercase tracking-[0.14em] text-mist-700 2xl:inline">
                   {group.title}
                 </span>
                 {group.items.map((item) => (
@@ -113,7 +118,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                     end={item.to === '/member'}
                     className={({ isActive }) =>
                       cn(
-                        'whitespace-nowrap rounded-lg px-2.5 py-1.5 text-[13px] transition',
+                        'whitespace-nowrap rounded-lg px-2 py-1.5 text-[12.5px] transition',
                         isActive
                           ? item.master
                             ? 'bg-purple-500/15 text-purple-200'
@@ -143,7 +148,8 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <span className="block max-w-[120px] truncate text-[12.5px] text-mist-100">
                   {user?.displayName}
                 </span>
-                <span className="block text-[11px] text-mist-700">{user?.phone ?? ''}</span>
+                {/* 1280–1536 只显示昵称：导航 12 项需要这点宽度，手机号可去「用户信息」页看 */}
+                <span className="hidden text-[11px] text-mist-700 2xl:block">{user?.phone ?? ''}</span>
               </span>
               <ChevronRight
                 size={13}

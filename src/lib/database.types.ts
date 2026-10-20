@@ -1,6 +1,6 @@
 /**
  * ── 文件：src/lib/database.types.ts ─────────────────────────────
- * 功能：云数据库 schema 类型（29 张表）。传给 createWorkBuddyCloud<Database>() 后，
+ * 功能：云数据库 schema 类型（30 张表，含 stock_valuation）。传给 createWorkBuddyCloud<Database>() 后，
  *       from('表名') 才有行列级类型提示。
  * 改动指引：
  *   1. 新增表 → 这里加 xxx: Table<XxxRow>，并在 lib/types.ts 定义 XxxRow；
@@ -35,6 +35,9 @@ import type {
   ReviewRow,
   MaterialRow,
   StudyPlanRow,
+  StockValuationGate,
+  StockValuationRow,
+  StockValuationTrend,
   SubmitRow,
   ThinktankIndexRow,
   TradeRow,
@@ -83,6 +86,7 @@ export type Database = {
       market_temp: Table<MarketTempRow>
       market_temp_history: Table<MarketTempHistoryRow>
       company_research: Table<CompanyResearchRow>
+      stock_valuation: Table<StockValuationRow>
     }
     Views: Record<string, never>
     Functions: Record<string, never>

@@ -42,6 +42,10 @@ const MessageBoardPage = lazy(() => import('./pages/MessageBoardPage').then((m) 
 const CompanyResearchPage = lazy(() =>
   import('./pages/CompanyResearchPage').then((m) => ({ default: m.CompanyResearchPage })),
 )
+const ValuationPage = lazy(() => import('./pages/ValuationPage').then((m) => ({ default: m.ValuationPage })))
+const ValuationDetailPage = lazy(() =>
+  import('./pages/ValuationDetailPage').then((m) => ({ default: m.ValuationDetailPage })),
+)
 const MasterDocPage = lazy(() => import('./pages/MasterDocPage').then((m) => ({ default: m.MasterDocPage })))
 const MasterCulturePage = lazy(() =>
   import('./pages/MasterCulturePage').then((m) => ({ default: m.MasterCulturePage })),
@@ -186,12 +190,14 @@ function MemberRoutes() {
             </RequireMember>
           }
         />
+        {/* AI 问答已移入高级学员专区（v1.0.1）：普通学员访问旧路径时引导到专区 */}
+        <Route path="/member/ai" element={<Navigate to="/member/master/ai" replace />} />
         <Route
-          path="/member/ai"
+          path="/member/master/ai"
           element={
-            <RequireMember>
+            <RequireMaster>
               <AiTutorPage />
-            </RequireMember>
+            </RequireMaster>
           }
         />
         <Route
@@ -211,6 +217,22 @@ function MemberRoutes() {
           }
         />
         <Route path="/member/trade" element={<Navigate to="/member/research" replace />} />
+        <Route
+          path="/member/valuation"
+          element={
+            <RequireMember>
+              <ValuationPage />
+            </RequireMember>
+          }
+        />
+        <Route
+          path="/member/valuation/:code"
+          element={
+            <RequireMember>
+              <ValuationDetailPage />
+            </RequireMember>
+          }
+        />
         <Route
           path="/member/master/doc"
           element={

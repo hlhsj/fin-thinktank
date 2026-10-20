@@ -20,11 +20,7 @@ import { daysLeft, useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import { createOrder, readPrices } from '../services/content'
 
-/**
- * 收款码：放在 public/ 下，构建后位于站点根目录（hash 路由下相对路径安全）。
- * 仓库内只提供占位图 `wechat-pay-qr.svg`，部署时替换为自己的收款码（jpg/png 均可，
- * 同时改这里的扩展名）。
- */
+/** 收款码：放在 public/ 下，构建后位于站点根目录（hash 路由下相对路径安全） */
 const QR_SRC = `${import.meta.env.BASE_URL}wechat-pay-qr.svg`
 
 /**
@@ -36,7 +32,7 @@ const QR_SRC = `${import.meta.env.BASE_URL}wechat-pay-qr.svg`
 const TOTAL_LIMIT_DAYS = 390
 const PLAN_MAX_QTY: Record<PlanKey, number> = { member: 12, master: 4 }
 
-/** 管理员微信号：付款后加好友、发订单号，由其核对到账并开通权益。通过环境变量注入，避免把个人账号写进仓库 */
+/** 管理员微信号：付款后加好友、发订单号，由其核对到账并开通权益 */
 const ADMIN_WECHAT = import.meta.env.VITE_ADMIN_WECHAT || 'your-wechat-id'
 
 interface SubmittedOrder {

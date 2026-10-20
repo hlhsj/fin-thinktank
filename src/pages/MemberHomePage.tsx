@@ -1,6 +1,6 @@
 /**
  * ── 文件：src/pages/MemberHomePage.tsx ──────────────────────────
- * 功能：会员首页：欢迎区、温度计卡片、资料 / 复盘快照、高级会员入口卡片。
+ * 功能：会员首页：欢迎区、温度计卡片、功能入口（含估值实验室）、资料 / 复盘快照、高级会员入口卡片。
  * 数据：listChapters、listReviews、listMarketTemp。
  * 改动指引：
  *   1. 改快照卡 → SNAPSHOTS 数组；
@@ -14,6 +14,7 @@ import {
   Bell,
   BookOpen,
   Building2,
+  Calculator,
   FileText,
   GraduationCap,
   LineChart,
@@ -21,13 +22,11 @@ import {
   Sparkles,
 } from 'lucide-react'
 import { Disclaimer, PageHeader } from '../components/PageHeader'
-import { ThermometerCard } from '../components/ThermometerCard'
 import { EmptyState } from '../components/ui'
 import { isMasterValid, useAuth } from '../context/AuthContext'
 import { SITE } from '../lib/site'
-import type { MarketTempRow } from '../lib/types'
 import { cn, readableError, relativeTime } from '../lib/utils'
-import { listChapters, listMarketTemp, listReviews } from '../services/content'
+import { listChapters, listReviews } from '../services/content'
 
 const SNAPSHOTS = [
   {
@@ -58,7 +57,7 @@ const SNAPSHOTS = [
     key: 'market',
     to: '/member/market',
     label: 'A股市场数据',
-    desc: '每交易日收盘后更新',
+    desc: 'A股温度计 + 市盈率 TTM',
     icon: LineChart,
     accent: 'var(--accent-sand)',
   },
@@ -79,16 +78,17 @@ const SNAPSHOTS = [
     accent: 'var(--accent-coral)',
   },
   {
-    key: 'ai',
-    to: '/member/ai',
-    label: 'AI 问答',
-    desc: 'AI助教待开发',
-    icon: Sparkles,
-    accent: 'var(--accent-sky)',
+    key: 'valuation',
+    to: '/member/valuation',
+    label: '股票估值实验室',
+    desc: '程序化估值 · 有失真风险',
+    icon: Calculator,
+    accent: 'var(--accent-blue)',
   },
 ]
 
 const MASTER_CARDS = [
+  { to: '/member/master/ai', label: 'AI 问答', desc: '高级学员专属 · AI 助教', icon: Sparkles },
   { to: '/member/master/doc', label: '进阶研报库', desc: '课程讲义、研报、材料', icon: BookOpen },
   { to: '/member/master/culture', label: '顶级投研能力培养', desc: '每周末连麦陪跑全程记录', icon: GraduationCap },
   { to: '/member/master/homework', label: '高级学员作业', desc: '课后作业与结营材料', icon: FileText },
@@ -103,15 +103,8 @@ export function MemberHomePage() {
   /** 学习资料库最近更新时间 —— 取自 doc_chapter（此前误取复盘表，复盘为空就永远显示「暂无」） */
   const [chapterUpdatedAt, setChapterUpdatedAt] = useState<string | null>(null)
   const [reviews, setReviews] = useState<Awaited<ReturnType<typeof listReviews>>>([])
-  const [tempData, setTempData] = useState<MarketTempRow | null>(null)
-  const [tempLoading, setTempLoading] = useState(true)
 
   const load = useCallback(async () => {
-    // 温度数据独立加载：失败只降级该窗口，不影响页面其余部分
-    void listMarketTemp()
-      .then(setTempData)
-      .catch(() => setTempData(null))
-      .finally(() => setTempLoading(false))
     try {
       // 章节读取需带服务端令牌；无权益用户会收到 NO_ENTITLEMENT —— 首页只做概览统计，
       // 此时降级为空列表即可（资料库页会给出更明确的续费提示），不要让整页报错。
@@ -148,7 +141,7 @@ export function MemberHomePage() {
       <PageHeader
         eyebrow="Member Center"
         title={`${user?.displayName ?? '同学'}，欢迎回来`}
-        desc="这里汇总市场温度、本周复盘与全部功能入口；账号资料与权益状态见右上角「用户信息」。"
+        desc="这里汇总本周复盘与全部功能入口；A股温度计已并入「A股市场数据」页顶部；账号资料与权益状态见右上角「用户信息」。"
         right={
           <div className="flex gap-2">
             <Link to="/pay" className="btn btn-primary">
@@ -163,8 +156,7 @@ export function MemberHomePage() {
 
       {/* 权益、账号与状态已迁至「用户信息」页（右上角用户名窗口进入） */}
 
-      {/* 市场温度计（原「复盘节奏」窗口重做） */}
-      <ThermometerCard data={tempData} loading={tempLoading} />
+      {/* A股温度计已于 2026-10-20 并入「A股市场数据」页顶部（/member/market） */}
 
       <div>
         <h2 className="mb-3 text-[15px] text-mist-200">功能入口</h2>

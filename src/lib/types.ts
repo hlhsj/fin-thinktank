@@ -1,6 +1,6 @@
 /**
  * ── 文件：src/lib/types.ts ──────────────────────────────────────
- * 功能：全站行类型（与数据库表一一对应）+ 内容模块元数据 MODULE_META + 评级 / 计划分类等枚举。
+ * 功能：全站行类型（与数据库表一一对应，含估值结果 StockValuationRow）+ 内容模块元数据 MODULE_META + 评级 / 计划分类等枚举。
  * 改动指引：
  *   1. 表加字段 → 对应 XxxRow 加字段（可空用 | null，新建时可选用 ?）；
  *   2. 改模块名称 / 配色 → MODULE_META；
@@ -541,4 +541,68 @@ export interface MarketTempHistoryRow {
   breadth: number | null
   margin: number | null
   created_at: string
+}
+
+/**
+ * 股票估值结果（stock_valuation，一行一只股票）。
+ *
+ * 数据来源：Python 估值程序 `stock_value_estimator-main` 的 pipeline 跑完后，
+ * 由 `scripts/export_cloud.py` 转为 upsert 写入本表（主键 code，覆盖更新）。
+ * 前端只读不写；刷新频率与 Python 侧跑批一致（默认每交易日收盘后）。
+ *
+ * 字段与 pipeline 输出 JSON 的对应关系见
+ * `stock_value_estimator-main/docs/06-阶段三参数调试报告.md` §4。
+ */
+export interface StockValuationRow {
+  code: string
+  name: string
+  price: number
+  pe: number | null
+  pb: number | null
+  industry: string | null
+  /** 经营模式：产品型 / 项目型 / 资本型 / 运营型；rejected 时可能为 null */
+  mode: string | null
+  stage: string | null
+  substage: string | null
+  score_total: number | null
+  grade: 'A' | 'B' | 'C' | 'D' | null
+  /** 六维得分 { profit, cashflow, growth, solvency, operation, asset } */
+  dims: Record<string, number | null> | null
+  /** L1 排雷结果 */
+  gate: StockValuationGate | null
+  primary_model: 'PE' | 'PB' | 'EV/EBITDA' | null
+  r: number | null
+  g: number | null
+  b: number | null
+  target: number | null
+  fair_low: number | null
+  fair_high: number | null
+  buy: number | null
+  e_return: number | null
+  market_state: string | null
+  verdict: string | null
+  trend: StockValuationTrend | null
+  rim: Record<string, unknown> | null
+  ev_ebitda: Record<string, unknown> | null
+  caveat: string | null
+  invalid: string | null
+  rejected: boolean
+  avoid: boolean
+  avoid_reason: string | null
+  updated_at: string
+}
+
+export interface StockValuationGate {
+  risk_level: '正常' | '关注' | '高危' | '不通过'
+  hard: string[]
+  soft: string[]
+}
+
+export interface StockValuationTrend {
+  state: 'stable' | 'decelerate' | 'inflection' | 'stagnant' | 'collapse' | null
+  L: number | null
+  S: number | null
+  note: string | null
+  rebound?: boolean
+  lag_warning?: string
 }

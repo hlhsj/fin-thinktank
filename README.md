@@ -20,6 +20,7 @@
 | 企业研究表 | 企业清单、市值 / PE / 财务指标 | 表格虚拟化渲染 + 期间筛选 |
 | A 股市场数据 | 4 大指数平均 PE、33 地域 + 30 行业 PE、历史 PE-TTM 分位 | ECharts 折线/柱状，统一 hover 十字线；分位按当日值在历史 min/max 区间取相对位置 |
 | A 股温度计 | 7 因子等权合成 0–100 情绪读数，按 20/40/60/80 分区着色 | 7 个因子各有详情页（Tab 切换），含历史曲线回溯 |
+| 估值实验室 | 输入代码 / 名称批量估值（单次最多 10 只），输出结论、价格区间、四维评分与趋势判断 | 计算全部在后端完成（Python 服务 `/api/*`），前端只负责输入与渲染；判定文案由「操作导向」转为「估值导向」，避免交易指令式表述 |
 | 学习计划 | 周计划条目、完成状态、打卡统计 | 乐观更新 + 本地缓存 |
 | 作业 | 高级学员作业列表与提交 | 提交内容与账号绑定 |
 | 会员与续费 | 学员 / 高级学员两档权益，下单 + 收款码 + 人工对账 | 前端只做展示与引导，时长上限与份数规则服务端二次校验 |
@@ -50,11 +51,11 @@
     ├── lib/
     │   ├── cloud.ts           # 云服务客户端（全局单例）
     │   ├── config.ts          # 环境变量读取
-    │   ├── database.types.ts  # 29 张表的 Schema 类型
+    │   ├── database.types.ts  # 30 张表的 Schema 类型
     │   ├── types.ts           # 行类型定义
     │   ├── thermo.ts          # 温度计因子元数据与分区
     │   └── utils.ts           # 日期、格式化、错误文案
-    ├── pages/                 # 19 个页面
+    ├── pages/                 # 22 个页面
     └── services/              # 按领域拆分的云库读写（内容 / 账号 / 素材 / 缓存）
 ```
 
@@ -97,13 +98,13 @@ npm run preview    # http://localhost:4173
 
 ## 四、云服务与数据模型
 
-前端只依赖一个客户端实例（`src/lib/cloud.ts`），通过 `Database` 泛型获得表级类型提示。共 29 张表，按域划分：
+前端只依赖一个客户端实例（`src/lib/cloud.ts`），通过 `Database` 泛型获得表级类型提示。共 30 张表，按域划分：
 
 | 域 | 表 |
 | --- | --- |
 | 内容 | `kb_articles`、`doc_chapter`、`glossary`、`review`、`case_video`、`course_video`、`assets`、`asset_blobs`、`master_material` |
 | 学习 | `study_plans`、`plan_items`、`favorites`、`master_homework`、`homework_submit` |
-| 行情 | `market_data`、`market_extreme`、`pe_index`、`pe_industry`、`pe_industry_daily`、`pe_extreme`、`thinktank_index`、`company_research`、`market_temp`、`market_temp_history` |
+| 行情 | `market_data`、`market_extreme`、`pe_index`、`pe_industry`、`pe_industry_daily`、`pe_extreme`、`thinktank_index`、`company_research`、`market_temp`、`market_temp_history`、`stock_valuation` |
 | 账号与交易 | `phone_change`、`orders`、`trade_position`、`trade_history` |
 
 > `app_users`（手机号、bcrypt 密码哈希、权益到期时间）不在客户端可见表内：它开启了 RLS 且不建任何读策略，
@@ -167,6 +168,7 @@ npm run preview    # http://localhost:4173
 
 - 未接入云服务时，登录、列表、图表均为空态或报错——这是预期行为，不是 bug。
 - AI 助教页目前是占位 UI，未接入模型。
+- 估值实验室依赖外部 Python 后端（`/api/search`、`/api/valuate`），本仓库**不含后端实现**；未部署时页面会提示接口不可用，这是预期行为。
 - 付费流程是「下单 → 扫码 → 人工核对开通」，没有接支付网关回调。
 
 ---
@@ -184,6 +186,9 @@ npm run preview    # http://localhost:4173
 | 套餐价格、权益文案 | `src/lib/site.ts` | `PLANS`（成交价另由服务端价格表决定） |
 | 收款码、管理员微信 | `public/wechat-pay-qr.svg`、`.env.local` | `VITE_ADMIN_WECHAT` |
 | 温度计分区阈值、因子说明 | `src/lib/thermo.ts` | `ZONES` / `FACTOR_META` |
+| 估值结论文案 / 配色 | `src/lib/valuation.ts` | `verdictLabel` / `verdictTone` |
+| 估值接口地址 / 超时 | `src/services/valuateLive.ts` | `getJson` 的 url、`TIMEOUT_MS` |
+| 估值结果展示结构 | `src/components/ValuationResultView.tsx` | `DIM_LABELS` / `TREND_LABELS` / `RangeRuler` |
 | 指数与板块配色 | `src/pages/MarketPage.tsx` | `INDEX_META` / `CHART_PALETTE` |
 | 表格列 | `src/pages/CompanyResearchPage.tsx`、`MarketPage.tsx` | 表头与 tbody 需同步修改 |
 | 后台页签 | `src/pages/AdminPage.tsx` | `Tab` 类型 + `TABS` + 渲染分支 |
