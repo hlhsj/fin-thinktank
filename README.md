@@ -18,7 +18,7 @@
 
 **学员首页** —— A 股温度计读数、功能入口与权益状态：
 
-![学员首页](docs/screenshots/member-home.png)
+![学员首页](docs/screenshots/member-home-v2.png)
 
 **学习资料库** —— 章节目录树 + 正文（Markdown 渲染、要点标注、公式表格）：
 
