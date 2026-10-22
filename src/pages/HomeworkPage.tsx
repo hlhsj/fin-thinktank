@@ -1,13 +1,3 @@
-/**
- * ── 文件：src/pages/HomeworkPage.tsx ────────────────────────────
- * 功能：高级学员作业：作业列表、我的提交、提交表单与批改结果。
- * 数据：listHomework、listMySubmits、submitHomework。
- * 改动指引：
- *   1. 改提交校验（字数 / 截止时间）→ 表单提交前的校验；
- *   2. 改展示字段 → SubmitRow 渲染区；
- *   3. 作业与批改维护 → 后台 AdminPage 的作业管理。
- */
-
 import { useCallback, useEffect, useState } from 'react'
 import { Card, PageHeader, PendingContent } from '../components/PageHeader'
 import { EmptyState, Field, Spinner } from '../components/ui'
@@ -22,7 +12,6 @@ import {
   type SubmitRow,
 } from '../services/content'
 
-/** 高级学员作业：列表、提交、批改结果。 */
 export function HomeworkPage() {
   const { user } = useAuth()
   const toast = useToast()

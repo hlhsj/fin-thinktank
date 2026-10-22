@@ -1,14 +1,3 @@
-/**
- * ── 文件：src/pages/LoginPage.tsx ───────────────────────────────
- * 功能：登录 / 注册 / 忘记密码三态合一的表单页。
- * 改动指引：
- *   1. 改密码规则（当前 6 位数字）→ 校验正则与错误提示；
- *   2. 加昵称、邀请码等字段 → 表单 state + signUp 参数；
- *   3. 改登录后落地页 → 成功分支的 navigate；
- *   4. 改品牌展示 → SITE。
- * 注意：注册即开试用、密码哈希与校验都在服务端 RPC，前端只负责提交与提示。
- */
-
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
@@ -31,7 +20,6 @@ import { requestPasswordReset } from '../services/auth'
  */
 type Mode = 'login' | 'register' | 'forgot'
 
-/** 登录 / 注册 / 忘记密码三态合一的表单页。 */
 export function LoginPage() {
   const auth = useAuth()
   const toast = useToast()

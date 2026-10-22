@@ -1,12 +1,3 @@
-/**
- * ── 文件：src/services/assets.ts ────────────────────────────────
- * 功能：素材元数据与二进制读写：assets（文件名 / 类型 / 大小）+ asset_blobs（base64 正文）。
- * 改动指引：
- *   1. 改列表列 → LIST_COLUMNS；
- *   2. 换对象存储 → 只替换 saveAsset / fetchAssetData 的实现；
- *   3. 改体积限制 → 上传前压缩参数与 MAX_FILE_BYTES（见 services/storage.ts）。
- */
-
 import { cloud } from '../lib/cloud'
 import type { AssetRow } from '../lib/types'
 

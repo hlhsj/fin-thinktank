@@ -1,13 +1,3 @@
-/**
- * ── 文件：src/services/auth.ts ──────────────────────────────────
- * 功能：自建账号体系：注册 / 登录 / 刷新 / 登出、管理员用户管理、密码重置申请与审核，
- *       全部走 SECURITY DEFINER 的 RPC（app_users 表对客户端不可见）。
- * 改动指引：
- *   1. 改密码策略 → 服务端函数（本文件只传参）；
- *   2. 加账号字段 → AuthRpcRow + toSession + AuthContext 的 AppUser；
- *   3. 改错误提示 → AUTH_REASON_TEXT（把服务端 reason 映射成中文）。
- */
-
 import { cloud } from '../lib/cloud'
 import { normalizePhone } from '../lib/utils'
 

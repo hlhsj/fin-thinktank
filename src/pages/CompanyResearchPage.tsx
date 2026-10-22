@@ -1,14 +1,3 @@
-/**
- * ── 文件：src/pages/CompanyResearchPage.tsx ─────────────────────
- * 功能：企业研究表：可排序表格（市值、PE、增速等）+ 智库指数走势图。
- * 数据：company_research、thinktank_index。
- * 改动指引：
- *   1. 加列 → 表头、单元格、排序键三处都要加；
- *   2. 改数字格式 → fmtNum / Dash；
- *   3. 改指数配色 → INDEX_PALETTE；
- *   4. 改行业标签 → industryLabel()。
- */
-
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { echarts, type EChartsOption } from '../lib/echarts'
@@ -178,7 +167,6 @@ function industryLabel(row: CompanyResearchRow) {
   return sub || macro || '未分类'
 }
 
-/** 企业研究表：可排序表格 + 智库指数走势。 */
 export function CompanyResearchPage() {
   const toast = useToast()
   const { theme } = useTheme()

@@ -1,9 +1,3 @@
-/**
- * ── 文件：src/components/ValuationRiskNotice.tsx ────────────────
- * 功能：估值功能的风险提示条（程序化估值存在失真风险）。
- * 改动指引：改文案与配色 → 组件内常量与 className（当前用 down 色系表达风险）。
- */
-
 import { AlertTriangle } from 'lucide-react'
 import { cn } from '../lib/utils'
 

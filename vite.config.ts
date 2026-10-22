@@ -11,6 +11,16 @@ export default defineConfig({
     port: 5173,
     // 反向代理域名需要显式放行，否则 Vite 会拦截请求
     allowedHosts: true,
+    /**
+     * 估值实时计算 API（本地 Python 服务，stock_value_estimator-main/api/server.py）。
+     * 前端只调 /api/*，由 Vite 转发到 8787；构建产物不依赖此代理（线上需同源反代）。
+     */
+    proxy: {
+      '/api': {
+        target: 'http://127.0.0.1:8787',
+        changeOrigin: true,
+      },
+    },
   },
   preview: {
     host: '0.0.0.0',

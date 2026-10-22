@@ -1,12 +1,3 @@
-/**
- * ── 文件：src/lib/types.ts ──────────────────────────────────────
- * 功能：全站行类型（与数据库表一一对应，含估值结果 StockValuationRow）+ 内容模块元数据 MODULE_META + 评级 / 计划分类等枚举。
- * 改动指引：
- *   1. 表加字段 → 对应 XxxRow 加字段（可空用 | null，新建时可选用 ?）；
- *   2. 改模块名称 / 配色 → MODULE_META；
- *   3. 加下拉选项 → RATING_OPTIONS、PLAN_CATEGORIES。
- */
-
 export type ModuleKey = 'knowledge' | 'company' | 'briefing'
 export type ArticleStatus = 'draft' | 'published' | 'archived'
 
@@ -568,12 +559,29 @@ export interface StockValuationRow {
   grade: 'A' | 'B' | 'C' | 'D' | null
   /** 六维得分 { profit, cashflow, growth, solvency, operation, asset } */
   dims: Record<string, number | null> | null
+  /**
+   * 六维明细：每个维度下逐条子指标的原始值、得分、权重与打分口径。
+   *
+   * **只有实时接口 `api/server.py` 会注入**（云库 `stock_valuation` 表没有该列），
+   * 因此云库历史样本此字段为空——前端据此决定「能否点开维度」。
+   */
+  dim_detail?: Record<string, StockValuationDimDetail> | null
+  /**
+   * 历史估值通道与「去泡沫」二次估值。
+   *
+   * **只有实时接口会注入**（云库 `stock_valuation` 没有该列），云库历史样本为空。
+   * `band` 是分位倍数（PE 模型为 PE-TTM，PB 模型为 PB-MRQ），`px` 是套到当期
+   * EPS(TTM) / BPS 上得到的价格——两个模型的键名统一为 p20/p50/p80。
+   */
+  channel?: StockValuationChannel | null
   /** L1 排雷结果 */
   gate: StockValuationGate | null
   primary_model: 'PE' | 'PB' | 'EV/EBITDA' | null
   r: number | null
   g: number | null
   b: number | null
+  /** v3.0 低分红口径：估值实际采用的分红率（仅实时接口返回；null 表示未修正） */
+  b_used?: number | null
   target: number | null
   fair_low: number | null
   fair_high: number | null
@@ -592,6 +600,33 @@ export interface StockValuationRow {
   updated_at: string
 }
 
+/** 六维明细中的一条子指标 */
+export interface StockValuationDimItem {
+  key: string
+  label: string
+  /** 原始值。unit 为 pct 时**已是百分数**（10.5 表示 10.5%）；text 时为状态名 */
+  value: number | string | null
+  /** 该指标的得分（0–100）；数据缺失为 null */
+  score: number | null
+  /** 在所属维度内的权重（自动归一，缺项跳过） */
+  weight: number
+  /** 打分口径：anchor 绝对阈值 / peer 同业分位 / table 查表 */
+  basis: 'anchor' | 'peer' | 'table'
+  unit: 'pct' | 'x' | 'days' | 'num' | 'text'
+  note: string | null
+  /** 同业中位数（仅 basis=peer 时有值） */
+  peer_median: number | null
+  /** 同业样本数（<3 时无法算分位，得分为空） */
+  peer_n: number | null
+}
+
+export interface StockValuationDimDetail {
+  score: number | null
+  /** 该维度在总分中的权重 */
+  weight: number
+  items: StockValuationDimItem[]
+}
+
 export interface StockValuationGate {
   risk_level: '正常' | '关注' | '高危' | '不通过'
   hard: string[]
@@ -605,4 +640,89 @@ export interface StockValuationTrend {
   note: string | null
   rebound?: boolean
   lag_warning?: string
+}
+
+/** 通道三段分位：倍数（PE 或 PB） */
+export interface StockValuationChannelBand {
+  p20: number | null
+  p50: number | null
+  p80: number | null
+}
+
+/** 历史估值走势的一个采样点 */
+export interface StockValuationSeriesPoint {
+  /** 交易日 YYYY-MM-DD */
+  d: string
+  /** 当日倍数（PE-TTM 或 PB-MRQ） */
+  v: number
+}
+
+/**
+ * 历史估值走势：等间隔采样，且**保证最低点在序列内**
+ * ——卡片要标注「历史最低估值」，采样跳过极值的话标注就对不上图。
+ */
+export interface StockValuationSeries {
+  points: StockValuationSeriesPoint[]
+  /** 原始样本数（采样前） */
+  n: number
+  start: string | null
+  end: string | null
+  /** 历史最低：日期与倍数 */
+  low: StockValuationSeriesPoint | null
+}
+
+/**
+ * 去泡沫二次估值。
+ *
+ * `can` 只是「能不能算」（主模型用历史通道且已产出公平价）；
+ * 真正的计算结果要等点了按钮才有（按需计算，不随主响应返回）。
+ */
+export interface StockValuationDebubble {
+  /** 是否支持二次估值（PE/PB 模型且有公平价） */
+  can?: boolean
+  /** 是否已算出结果；false 时看 reason */
+  applicable: boolean
+  reason?: string | null
+  /** 窗口年数（默认 3） */
+  years?: number
+  /** 剔除分位（默认 0.9 → 剔最高 10%） */
+  cut_top?: number
+  /** 保留样本数 / 窗口内原始样本数 / 剔除条数 */
+  n?: number | null
+  n_raw?: number | null
+  removed?: number | null
+  /** 剔除阈值（倍数） */
+  cut?: number | null
+  band?: StockValuationChannelBand
+  px?: StockValuationChannelBand
+  /** 锚定后的倍数（PE 或 PB） */
+  fair_multiple?: number | null
+  target?: number | null
+  fair_low?: number | null
+  fair_high?: number | null
+  buy?: number | null
+  e_return?: number | null
+  verdict?: string | null
+  /** 相对主口径公平价的变化（−0.13 表示低 13%） */
+  delta?: number | null
+}
+
+export interface StockValuationChannel {
+  applicable: boolean
+  reason?: string | null
+  /** PE 或 PB —— 决定倍数的口径名 */
+  model: 'PE' | 'PB' | null
+  /** 套倍数用的单位：PE 为 EPS(TTM)，PB 为 BPS */
+  unit?: number | null
+  window_years?: number
+  n?: number | null
+  /** 当前倍数（PE 或 PB） */
+  current?: number | null
+  /** 当前倍数在历史分布中的分位（PE 模型看 PE 分位，PB 模型看 PB 分位） */
+  cur_pct?: number | null
+  band?: StockValuationChannelBand
+  px?: StockValuationChannelBand
+  /** 历史估值走势（画折线用） */
+  series?: StockValuationSeries | null
+  debubble?: StockValuationDebubble | null
 }

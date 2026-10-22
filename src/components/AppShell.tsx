@@ -1,15 +1,3 @@
-/**
- * ── 文件：src/components/AppShell.tsx ───────────────────────────
- * 功能：登录后的整体骨架：左侧导航（MEMBER_NAV / MASTER_NAV）、顶部栏、移动端抽屉、主题切换。
- * 改动指引：
- *   1. 加 / 删菜单 → 改 MEMBER_NAV 或 MASTER_NAV；to 必须与 App.tsx 的路由一致，
- *      master: true 表示仅高级会员可见；
- *   2. 换图标 → 从 lucide-react 引入后替换 icon 字段；
- *   3. 改侧栏宽度 / 断点 → 组件内 grid 与 md: 前缀；
- *   4. 改页脚 → 底部 SITE.fullName。
- * 注意：新增页面必须同时改这里和 App.tsx，只改一处会出现「有路由没入口」或「有入口 404」。
- */
-
 import { useState, type ReactNode } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import {
@@ -60,7 +48,6 @@ const MASTER_NAV: NavItem[] = [
   { to: '/member/master/homework', label: '高级学员作业', master: true, icon: ClipboardCheck },
 ]
 
-/** 登录后整体骨架：侧栏导航 + 顶栏 + 移动端抽屉。 */
 export function AppShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState(false)

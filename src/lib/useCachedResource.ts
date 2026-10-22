@@ -1,12 +1,3 @@
-/**
- * ── 文件：src/lib/useCachedResource.ts ──────────────────────────
- * 功能：通用数据加载 hook：内存缓存 + 可选 localStorage 持久缓存 + 并发去重 + 手动刷新。
- * 改动指引：
- *   1. 改缓存时长 → 调用处传的 ttl；
- *   2. 需要强制刷新 → 用返回的 reload()；
- *   3. 加「过期后先出旧数据再后台刷新」→ 在此 hook 内扩展，调用方不用改。
- */
-
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { DEFAULT_TTL, readCache, writeCache } from '../services/cache'
 import { readableError } from './utils'

@@ -1,13 +1,3 @@
-/**
- * ── 文件：src/components/PageHeader.tsx ─────────────────────────
- * 功能：页面通用外壳：PageHeader（眉标 / 标题 / 描述）、Card 容器、Disclaimer（免责声明条）、
- *       PendingContent（内容待录入占位）。
- * 改动指引：
- *   1. 改标题排版 → PageHeader 内的字号与 eyebrow 样式；
- *   2. 统一卡片圆角 / 边框 → Card 的 className；
- *   3. 改免责声明 → 优先改 lib/site.ts 的 DISCLAIMER，页面单独定制时再传参。
- */
-
 import type { ReactNode } from 'react'
 import { cn } from '../lib/utils'
 

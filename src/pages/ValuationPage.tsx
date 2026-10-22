@@ -1,15 +1,3 @@
-/**
- * ── 文件：src/pages/ValuationPage.tsx ───────────────────────────
- * 功能：估值实验室主页面：输入股票代码 / 名称（最多 10 只），调用后端计算并展示结果卡片。
- * 数据：services/valuateLive（searchStocks / valuateLive），**不读云库**。
- * 改动指引：
- *   1. 改批量上限 → MAX_BATCH；
- *   2. 改示例代码 → EXAMPLES；
- *   3. 改结果卡片 → ResultCard / ResultRow；
- *   4. 改风险提示 → VALUATION_DISCLAIMER。
- * 注意：所有指标均由后端计算，前端只负责输入与渲染，不参与估值逻辑。
- */
-
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   AlertCircle,
@@ -249,6 +237,9 @@ function ResultCard({
 
 /* ---------------- 主页面 ---------------- */
 
+/** 批量结果的会话级存档键（返回详情页后恢复用） */
+const SESSION_KEY = 'valuation.batch.v1'
+
 export function ValuationPage() {
   const [text, setText] = useState('')
   const [rows, setRows] = useState<LiveValuation[]>([])
@@ -258,6 +249,8 @@ export function ValuationPage() {
   const [total, setTotal] = useState(0)
   const [current, setCurrent] = useState('')
   const [apiOk, setApiOk] = useState<boolean | null>(null)
+  /** 正在探测（重试按钮据此显示「检测中…」） */
+  const [apiChecking, setApiChecking] = useState(false)
   const [expanded, setExpanded] = useState<string | null>(null)
   /** 输入联想：当前正在输入的片段（最后一个分隔符之后）的候选 */
   const [sug, setSug] = useState<SearchItem[]>([])
@@ -265,9 +258,60 @@ export function ValuationPage() {
   const detailRef = useRef<HTMLDivElement>(null)
   const abortRef = useRef(false)
 
-  useEffect(() => {
-    void checkApi().then(setApiOk)
+  /**
+   * 探测计算服务。
+   * 服务在云沙箱里，冷启动实测约 3.3 秒，所以 checkApi 内部会重试 3 次、单次超时 12 秒；
+   * 失败后**不能锁死页面**——按钮仍可点，另给一个「重试」入口手动再探。
+   */
+  const probeApi = useCallback(async () => {
+    setApiChecking(true)
+    const ok = await checkApi()
+    setApiOk(ok)
+    setApiChecking(false)
   }, [])
+
+  useEffect(() => {
+    void probeApi()
+  }, [probeApi])
+
+  /** 本地开发（vite dev + 8787 代理）才提示启动命令；线上是同源单端口服务，提示重试即可 */
+  const isLocal = ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname)
+
+  /**
+   * 结果落 sessionStorage：点「查看六维明细」会卸载本页，回来时 state 已丢。
+   * 只存本会话（关标签页即失效），不写云库——这里的目标是「一次算完一批」，不是维护样本清单。
+   */
+  const restoredRef = useRef(false)
+  useEffect(() => {
+    if (restoredRef.current) return
+    restoredRef.current = true
+    try {
+      const raw = sessionStorage.getItem(SESSION_KEY)
+      if (!raw) return
+      const saved = JSON.parse(raw) as {
+        text?: string
+        rows?: LiveValuation[]
+        expanded?: string | null
+      }
+      if (typeof saved.text === 'string' && saved.text) setText(saved.text)
+      if (Array.isArray(saved.rows) && saved.rows.length) {
+        setRows(saved.rows)
+        setExpanded(saved.expanded ?? null)
+      }
+    } catch {
+      // 存档损坏/隐私模式：按空页面处理，不影响计算
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!restoredRef.current) return
+    try {
+      if (!text && !rows.length) sessionStorage.removeItem(SESSION_KEY)
+      else sessionStorage.setItem(SESSION_KEY, JSON.stringify({ text, rows, expanded }))
+    } catch {
+      // 写不进去（隐私模式/配额满）就算了，功能不依赖它
+    }
+  }, [text, rows, expanded])
 
   const queued = useMemo(() => parseInput(text), [text])
 
@@ -337,6 +381,7 @@ export function ValuationPage() {
           code = found[0].code
         }
         const row = await valuateLive(code)
+        if (apiOk !== true) setApiOk(true)   // 能算出结果就说明服务是通的，自动消掉告警
         acc.push(row)
         setRows([...acc])
       } catch (e) {
@@ -347,7 +392,7 @@ export function ValuationPage() {
     }
     setCurrent('')
     setRunning(false)
-  }, [text, running])
+  }, [text, running, apiOk])
 
   const stop = () => {
     abortRef.current = true
@@ -388,7 +433,7 @@ export function ValuationPage() {
         right={
           <span className="hidden items-center gap-1.5 rounded-xl border border-ink-700 bg-ink-900 px-3 py-1.5 text-[12px] text-mist-500 md:inline-flex">
             <Calculator size={13} className="text-gold" />
-            模型版本 v2.9 · 实时计算
+            模型版本 v3.0 · 实时计算
           </span>
         }
       />
@@ -435,7 +480,7 @@ export function ValuationPage() {
           <button
             type="button"
             onClick={run}
-            disabled={running || !queued.length || apiOk === false}
+            disabled={running || !queued.length}
             className="btn btn-primary h-10 px-4 text-[13px] disabled:opacity-50"
           >
             {running ? <Loader2 size={14} className="animate-spin" /> : <Calculator size={14} />}
@@ -495,19 +540,36 @@ export function ValuationPage() {
         )}
 
         {apiOk === false ? (
-          <p className="mt-2 flex items-start gap-1.5 rounded-lg border border-gold/30 bg-gold/5 px-3 py-2 text-[11.5px] leading-relaxed text-gold-soft">
+          <div className="mt-2 flex items-start gap-2 rounded-lg border border-gold/30 bg-gold/5 px-3 py-2 text-[11.5px] leading-relaxed text-gold-soft">
             <AlertCircle size={13} className="mt-0.5 shrink-0" />
-            <span>
-              本地计算服务未启动，无法实时计算。启动方式：在
-              <code className="mx-1 rounded bg-ink-950 px-1 py-0.5 text-[11px]">
-                stock_value_estimator-main
-              </code>
-              目录运行
-              <code className="mx-1 rounded bg-ink-950 px-1 py-0.5 text-[11px]">
-                python api/server.py --port 8787
-              </code>
+            <span className="flex-1">
+              {isLocal ? (
+                <>
+                  计算服务未启动，无法实时计算。启动方式：在
+                  <code className="mx-1 rounded bg-ink-950 px-1 py-0.5 text-[11px]">
+                    stock_value_estimator-main
+                  </code>
+                  目录运行
+                  <code className="mx-1 rounded bg-ink-950 px-1 py-0.5 text-[11px]">
+                    python api/server.py --port 8787
+                  </code>
+                </>
+              ) : (
+                <>
+                  计算服务暂时连不上（可能正在冷启动或刚重启），已自动重试仍未成功。
+                  稍等片刻点「重试」即可，无需刷新页面。
+                </>
+              )}
             </span>
-          </p>
+            <button
+              type="button"
+              onClick={() => void probeApi()}
+              disabled={apiChecking}
+              className="shrink-0 rounded-md border border-gold/40 px-2 py-0.5 text-[11px] text-gold-soft transition hover:bg-gold/10 disabled:opacity-50"
+            >
+              {apiChecking ? '检测中…' : '重试'}
+            </button>
+          </div>
         ) : null}
       </Card>
 

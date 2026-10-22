@@ -1,13 +1,3 @@
-/**
- * ── 文件：src/services/storage.ts ───────────────────────────────
- * 功能：素材引用协议 asset-id:// 的解析，以及图片入库前压缩（最长边 1600px、JPEG 0.82）。
- * 改动指引：
- *   1. 改压缩参数 → MAX_IMAGE_EDGE / JPEG_QUALITY / COMPRESS_THRESHOLD；
- *   2. 改附件上限 → MAX_FILE_BYTES（超限走「存文件名 + 提示」而不是塞 base64）；
- *   3. 换引用协议 → ASSET_PREFIX（需同步 Markdown 渲染与后台表单）。
- * 注意：不用对象存储是因为无云会话时签名下载一律 401，这是刻意的取舍。
- */
-
 import { fetchAssetData } from './assets'
 
 /**

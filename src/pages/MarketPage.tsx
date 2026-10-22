@@ -1,17 +1,3 @@
-/**
- * ── 文件：src/pages/MarketPage.tsx ──────────────────────────────
- * 功能：A 股市场数据主页面：4 大指数平均 PE 与历史分位、地域 / 行业板块 PE 表格与走势图、
- *       数据缺口提示。
- * 数据：pe_index、pe_industry、pe_industry_daily、pe_extreme。
- * 改动指引：
- *   1. 加 / 换指数 → INDEX_META（code / name / 双主题配色）；
- *   2. 改图表配色 → CHART_PALETTE；
- *   3. 改缺口判定 → GAP_DAYS（默认 15 天，覆盖春节长假；太大会漏报，太小会误报）；
- *   4. 改表格列 → 表头 IndSortTh 与 tbody 同步；
- *   5. 改免责声明 → 文件内 DISCLAIMER。
- * 注意：缺失交易区间必须留空（connectNulls: false），否则曲线会横穿休市期，视觉上制造连续趋势。
- */
-
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { echarts, type EChartsOption } from '../lib/echarts'
 import { ChevronDown, ChevronUp } from 'lucide-react'
@@ -20,6 +6,7 @@ import { ThermometerCard } from '../components/ThermometerCard'
 import { EmptyState, Spinner } from '../components/ui'
 import { useTheme } from '../context/ThemeContext'
 import { cn, readableError } from '../lib/utils'
+import { CHART_PALETTE } from '../lib/chartPalette'
 import {
   DEFAULT_PERIOD,
   PERIOD_OPTIONS,
@@ -67,18 +54,7 @@ const INDEX_META: Array<{ code: string; name: string; color: string; colorLight:
   { code: '000688', name: '科创50', color: '#c792ea', colorLight: '#8250c8' },
 ]
 
-/** ECharts 坐标系配色：按主题取。
- *  gapFill = 「数据缺失」底色；gapFillNegative = 「区间值为负数」底色（偏暖，便于区分口径问题） */
-const CHART_PALETTE = {
-  dark: {
-    legend: '#9fb0c4', axisLine: '#24303f', axisLabel: '#7d8da1', splitLine: '#182231',
-    gapFill: 'rgba(255,255,255,0.045)', gapFillNegative: 'rgba(216,171,74,0.10)',
-  },
-  light: {
-    legend: '#5d6b7d', axisLine: '#d6dee9', axisLabel: '#71808f', splitLine: '#e7ecf3',
-    gapFill: 'rgba(15,32,56,0.05)', gapFillNegative: 'rgba(162,118,28,0.09)',
-  },
-}
+/** ECharts 坐标系配色已提取到 `lib/chartPalette.ts`（估值详情页共用同一套观感） */
 
 const DISCLAIMER =
   '免责声明：本页为客观历史数据统计（市场温度与四大指数的市盈率 TTM、历史极值与当前分位），仅用于数据查阅与学习参考，不代表任何观点或判断，不构成任何投资建议。'

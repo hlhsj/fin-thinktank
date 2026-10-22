@@ -1,15 +1,3 @@
-/**
- * ── 文件：src/pages/AdminPage.tsx ───────────────────────────────
- * 功能：管理后台外壳：10 个页签（内容 6 个 + 用户权益、留言回复、市盈率数据、作业管理），
- *       其中用户面板内含 5 个子页签（权益、价格、订单、换绑、密码重置）。
- * 改动指引：
- *   1. 加页签 → Tab 联合类型 + TABS 数组 + 底部渲染分支，三处缺一不可；
- *   2. 改用户权益操作 → UsersPanel（USERS_SUBS 控制子页签）；
- *   3. 改市盈率维护列 → PE_INDEX_META；
- *   4. 改权限 → 前端 RequireAdmin（App.tsx）+ 服务端 RPC 双重校验，前端只做展示控制。
- * 注意：后台所有写操作都带 uid + token，token 失效时会统一提示重新登录。
- */
-
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   BookOpen,
@@ -97,7 +85,6 @@ const TABS: Array<{ key: Tab; label: string; icon: typeof Users }> = [
   { key: 'homework', label: '作业管理', icon: ClipboardList },
 ]
 
-/** 管理后台入口：页签切换 + 统一鉴权令牌下发。 */
 export function AdminPage() {
   const auth = useAuth()
   const toast = useToast()

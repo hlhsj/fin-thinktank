@@ -1,12 +1,3 @@
-/**
- * ── 文件：src/pages/MasterIntroPage.tsx ─────────────────────────
- * 功能：高级会员介绍 / 销售页（未开通高级权益时的落地页）。
- * 改动指引：
- *   1. 改模块介绍 → MODULES；
- *   2. 改能力标签 → ABILITIES；
- *   3. 改 CTA → 底部按钮指向 /pay。
- */
-
 import { Link } from 'react-router-dom'
 import { ArrowLeft, Crown, Sparkles, Users } from 'lucide-react'
 import { Card, Disclaimer, PageHeader } from '../components/PageHeader'
@@ -37,7 +28,6 @@ const MODULES = [
 
 const ABILITIES = ['研究力', '资料库', '市场感', '数据力']
 
-/** 高级会员介绍 / 销售页。 */
 export function MasterIntroPage() {
   return (
     <div className="min-h-screen bg-ink-950">

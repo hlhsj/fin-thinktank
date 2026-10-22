@@ -1,12 +1,3 @@
-/**
- * ── 文件：src/context/ToastContext.tsx ──────────────────────────
- * 功能：全局轻提示，三种语气（success / error / info），自动消失。
- * 改动指引：
- *   1. 改停留时长 → ToastProvider 内的定时器；
- *   2. 加语气 → ToastTone 联合类型 + TONE_STYLE；
- *   3. 业务里调用 → const toast = useToast(); toast.success('已保存')。
- */
-
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
 import { AlertTriangle, CheckCircle2, Info, X } from 'lucide-react'
 
@@ -33,7 +24,6 @@ const TONE_STYLE: Record<ToastTone, { border: string; color: string; Icon: typeo
   info: { border: 'var(--tone-info-bd)', color: 'var(--tone-info-fg)', Icon: Info },
 }
 
-/** 全局轻提示 Provider。 */
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([])
 

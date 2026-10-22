@@ -1,14 +1,3 @@
-/**
- * ── 文件：src/components/ui.tsx ─────────────────────────────────
- * 功能：无业务依赖的基础组件：Spinner、LoadingBlock、EmptyState、Modal、ConfirmDialog、
- *       useConfirm、ProgressBar、ProgressRing。
- * 改动指引：
- *   1. 改加载态 → LoadingBlock 的骨架行数与动画；
- *   2. 改弹窗宽度 / 动效 → Modal（内部用 createPortal 挂到 body）；
- *   3. 业务里需要二次确认 → 一律 const confirm = useConfirm() 后 await confirm({...})。
- * 注意：不要用 window.confirm / window.alert —— iframe 预览环境会静默返回 false。
- */
-
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { Inbox, Loader2, X } from 'lucide-react'

@@ -1,13 +1,3 @@
-/**
- * ── 文件：src/pages/ChangePhonePage.tsx ─────────────────────────
- * 功能：手机号换绑申请：校验新号 → 提交申请 → 管理员审核后生效。
- * 数据：createPhoneChange（phone_change 表）。
- * 改动指引：
- *   1. 改校验规则 → normalizePhone / isMainlandPhone；
- *   2. 改审核流程 → 后台 AdminPage 的换绑审核；
- *   3. 改提示文案 → 表单 hint。
- */
-
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FileText, Search } from 'lucide-react'
@@ -19,7 +9,6 @@ import { normalizePhone } from '../lib/utils'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 
-/** 手机号换绑申请（提交后由管理员审核）。 */
 export function ChangePhonePage() {
   const { user } = useAuth()
   const toast = useToast()

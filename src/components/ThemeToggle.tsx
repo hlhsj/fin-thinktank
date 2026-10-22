@@ -1,12 +1,3 @@
-/**
- * ── 文件：src/components/ThemeToggle.tsx ────────────────────────
- * 功能：日 / 夜主题切换按钮（左下角固定）。
- * 改动指引：
- *   1. 改位置 / 尺寸 → 外层 fixed 定位类；
- *   2. 改成三态（跟随系统 / 浅色 / 深色）→ 结合 context/ThemeContext 扩展；
- *   3. 换图标 → Sun / Moon（lucide-react）。
- */
-
 import { Moon, Sun } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 

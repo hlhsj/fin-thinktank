@@ -1,13 +1,3 @@
-/**
- * ── 文件：src/lib/database.types.ts ─────────────────────────────
- * 功能：云数据库 schema 类型（30 张表，含 stock_valuation）。传给 createWorkBuddyCloud<Database>() 后，
- *       from('表名') 才有行列级类型提示。
- * 改动指引：
- *   1. 新增表 → 这里加 xxx: Table<XxxRow>，并在 lib/types.ts 定义 XxxRow；
- *   2. 表加列 → 只改 lib/types.ts 的 Row，本文件不用动；
- *   3. 表改名 → 本文件与 services 里所有 from('旧表名') 要同步替换（全局搜索最稳）。
- */
-
 import type {
   ArticleRow,
   AssetBlobRow,

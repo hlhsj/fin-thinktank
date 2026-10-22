@@ -1,13 +1,3 @@
-/**
- * ── 文件：src/pages/ValuationDetailPage.tsx ─────────────────────
- * 功能：单只股票估值详情页（路由 /member/valuation/:code），复用 ValuationResultView 渲染完整结论。
- * 数据：valuateLive(code)。
- * 改动指引：
- *   1. 改加载 / 失败态 → 组件内状态分支；
- *   2. 改免责声明 → VALUATION_DISCLAIMER；
- *   3. 改返回入口 → 顶部返回链接。
- */
-
 import { useParams } from 'react-router-dom'
 import { Link } from 'react-router-dom'
 import { AlertCircle, ArrowLeft, Loader2 } from 'lucide-react'
@@ -33,7 +23,6 @@ const VALUATION_DISCLAIMER =
   '本页为量化估值模型的程序化输出（六维评价、经营模式判定、戈登/RIM/EV-EBITDA 多模型估值与情景期望收益），' +
   '模型参数与行业倍数含人工标定成分，结论仅用于学习与方法论研究，不构成任何投资建议。'
 
-/** 单只股票估值详情页。 */
 export function ValuationDetailPage() {
   const { code = '' } = useParams<{ code: string }>()
 

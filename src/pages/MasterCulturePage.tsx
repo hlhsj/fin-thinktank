@@ -1,13 +1,3 @@
-/**
- * ── 文件：src/pages/MasterCulturePage.tsx ───────────────────────
- * 功能：顶级投研能力培养：四项能力介绍 + 课程回放列表与播放器。
- * 数据：listCourseVideos（仅 published）。
- * 改动指引：
- *   1. 改四项能力 → ABILITIES；
- *   2. 改播放器 → ReplayPlayer（B 站 iframe / 直链 video 两分支）；
- *   3. 改回放列表 → CourseReplaySection 内的分组逻辑。
- */
-
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { PlayCircle, Sparkles, Video, X } from 'lucide-react'
 import { Card, Disclaimer, PageHeader } from '../components/PageHeader'
@@ -195,7 +185,6 @@ function CourseReplaySection() {
   )
 }
 
-/** 顶级投研能力培养：能力介绍 + 课程回放。 */
 export function MasterCulturePage() {
   return (
     <div className="space-y-5">

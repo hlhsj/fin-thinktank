@@ -1,13 +1,3 @@
-/**
- * ── 文件：src/components/ContentGuard.tsx ───────────────────────
- * 功能：内容保护：拦截右键、复制、拖拽保存，带 data-allow-copy 的区域放行。
- * 改动指引：
- *   1. 放宽 / 收紧 → 事件监听列表（contextmenu / copy / dragstart）；
- *   2. 需要允许复制的元素 → 加 data-allow-copy 属性（如收款页的微信号、订单号）；
- *   3. 整站关闭 → 在 App.tsx 移除 <ContentGuard />。
- * 注意：这只是提高复制成本，不是安全边界 —— 真正敏感的内容不要下发到前端。
- */
-
 import { useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 

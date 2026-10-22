@@ -1,13 +1,3 @@
-/**
- * ── 文件：src/pages/MemberHomePage.tsx ──────────────────────────
- * 功能：会员首页：欢迎区、温度计卡片、功能入口（含估值实验室）、资料 / 复盘快照、高级会员入口卡片。
- * 数据：listChapters、listReviews、listMarketTemp。
- * 改动指引：
- *   1. 改快照卡 → SNAPSHOTS 数组；
- *   2. 改高级会员入口 → MASTER_CARDS；
- *   3. 改数据来源 → 底部 useEffect 内的三个请求。
- */
-
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
@@ -94,7 +84,6 @@ const MASTER_CARDS = [
   { to: '/member/master/homework', label: '高级学员作业', desc: '课后作业与结营材料', icon: FileText },
 ]
 
-/** 会员首页：温度计、资料与复盘快照、高级会员入口。 */
 export function MemberHomePage() {
   const { user } = useAuth()
   const [loading, setLoading] = useState(true)
