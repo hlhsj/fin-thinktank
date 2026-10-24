@@ -20,7 +20,11 @@ const QR_SRC = `${import.meta.env.BASE_URL}wechat-pay-qr.jpg`
 const TOTAL_LIMIT_DAYS = 390
 const PLAN_MAX_QTY: Record<PlanKey, number> = { member: 12, master: 4 }
 
-/** 管理员微信号：付款后加好友、发订单号，由其核对到账并开通权益 */
+/** 管理员微信号：付款后加好友、发订单号，由其核对到账并开通权益。
+ *
+ * 公开仓库不含真实联系方式，部署前改成自己的微信号
+ * （或改为从后端接口读取，避免硬编码在前端 bundle 里）。
+ */
 const ADMIN_WECHAT = 'your-wechat-id'
 
 interface SubmittedOrder {

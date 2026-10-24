@@ -500,6 +500,21 @@ export interface MarketTempRow {
   created_at: string
 }
 
+/**
+ * 市场页首屏聚合（后端 `marketSummary`）。
+ *
+ * 这三样在页面上永远同时需要，拆成三个请求就是三次往返；合并后前端只付一次。
+ * `boards = false`（当前 SHOW_BOARD_PE 关闭）时 gap/region/industry 恒为空数组。
+ */
+export interface MarketSummary {
+  temp: MarketTempRow | null
+  index: PeIndexRow[]
+  extreme: PeExtremeRow[]
+  gap: PeDataGapRow[]
+  region: PeIndustryRow[]
+  industry: PeIndustryRow[]
+}
+
 /** 高级学员课程回放（视频托管在第三方平台，这里管理链接与元信息） */
 export interface CourseVideoRow {
   id: number
@@ -725,4 +740,44 @@ export interface StockValuationChannel {
   /** 历史估值走势（画折线用） */
   series?: StockValuationSeries | null
   debubble?: StockValuationDebubble | null
+  /** 周期重算（v3.0.2）：只在点了「周期重算」按钮后才有结果 */
+  cycle?: StockValuationCycle | null
+}
+
+/**
+ * 周期重算（v3.0.2）。
+ *
+ * 口径 = 正常化 EPS（ROE 中位 × BPS）+ 去泡沫通道，专门解决
+ * 「周期顶部 TTM 利润 × 历史倍数」把公平价放大一个数量级的问题
+ * （佰维 TTM EPS 17.34 vs 正常化 1.22，公平价 671 → 32）。
+ * `can` 只表示「能不能算」，结果要等按钮触发（按需计算，不进主响应）。
+ */
+export interface StockValuationCycle {
+  /** 是否支持周期重算（PE 计价、有公平价，且 TTM 利润显著高于正常化） */
+  can?: boolean
+  /** 是否已判为周期股（利润反复暴跌 + 利润率大摆动） */
+  is_cycle?: boolean
+  /** TTM EPS 是否达到正常化的 2 倍以上（峰值利润） */
+  peak?: boolean
+  /** 是否已算出结果；false 时看 reason */
+  applicable: boolean
+  reason?: string | null
+  /** TTM EPS（主口径使用） */
+  eps_ttm?: number | null
+  /** 正常化 EPS = 跨周期 ROE 中位 × BPS */
+  eps_norm?: number | null
+  /** TTM / 正常化；>2 说明利润处于周期高位 */
+  eps_ratio?: number | null
+  band?: StockValuationChannelBand
+  px?: StockValuationChannelBand
+  /** 锚定后的 PE 倍数 */
+  fair_multiple?: number | null
+  target?: number | null
+  fair_low?: number | null
+  fair_high?: number | null
+  buy?: number | null
+  e_return?: number | null
+  verdict?: string | null
+  /** 相对主口径公平价的变化（−0.95 表示低 95%） */
+  delta?: number | null
 }

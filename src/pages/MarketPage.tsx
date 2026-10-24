@@ -18,11 +18,8 @@ import {
 import { useCachedResource } from '../lib/useCachedResource'
 import { cacheKey } from '../services/cache'
 import {
-  listMarketTemp,
-  listPeDataGap,
-  listPeExtreme,
+  getMarketSummary,
   listPeIndex,
-  listPeIndustry,
   listPeIndustryDaily,
   type PeDataGapRow,
   type PeExtremeRow,
@@ -499,30 +496,54 @@ export function MarketPage(_props: { view?: 'today' | 'history' } = {}) {
    */
   const sinceRecent = useMemo(() => shiftMonths(new Date().toISOString().slice(0, 10), 13), [])
 
-  // ---- 数据资源：各自独立缓存与加载态；命中会话缓存时不阻塞渲染 ----
-  /** A股温度计快照（2026-10-20 由首页并入本页顶部；7 因子/走势的权益分级在组件内处理） */
-  const tempRes = useCachedResource(cacheKey('market:temp'), listMarketTemp)
-  const idxRes = useCachedResource(
-    cacheKey('pe:index:recent'),
-    useCallback(() => listPeIndex({ since: sinceRecent }), [sinceRecent]),
+  // ---- 数据资源：首屏三样（温度快照 / 指数窗口 / 历史极值）合并为一次请求 ----
+  /**
+   * 聚合请求（v2.0.0）：这三样在页面上永远同时需要，拆开就是三次往返；
+   * 由后端 marketSummary 一次返回，冷启动往返 3 → 1。服务端三段各自仍有独立缓存。
+   */
+  const summaryRes = useCachedResource(
+    cacheKey('market:summary', sinceRecent, SHOW_BOARD_PE ? 'boards' : 'core'),
+    useCallback(() => getMarketSummary({ since: sinceRecent, boards: SHOW_BOARD_PE }), [sinceRecent]),
   )
-  /** 历史极值表（67 行）——表格的「历史最低/最高位」直接读它，不再拉全量现算 */
-  const extremeRes = useCachedResource(cacheKey('pe:extreme'), listPeExtreme)
-  /** 数据缺口备注（极少行）——决定缺口色块标「区间值为负数」还是「数据缺失」 */
-  const gapRes = useCachedResource(SHOW_BOARD_PE ? cacheKey('pe:datagap') : null, listPeDataGap)
-  const gapNotes = gapRes.data ?? []
-  const regionRes = useCachedResource(
-    SHOW_BOARD_PE ? cacheKey('pe:industry:region') : null,
-    useCallback(() => listPeIndustry('region'), []),
+  const bundle = summaryRes.data
+
+  /**
+   * 下面三个「资源对象」保持原字段形状（data / loading / error / revalidate），
+   * 因此页面其余渲染逻辑无需改动；数据引用来自同一个 bundle，身份稳定不触发多余重算。
+   */
+  const tempRes = useMemo(
+    () => ({
+      data: bundle?.temp ?? null,
+      loading: summaryRes.loading,
+      error: summaryRes.error,
+      revalidate: summaryRes.revalidate,
+    }),
+    [bundle, summaryRes.loading, summaryRes.error, summaryRes.revalidate],
   )
-  const macroRes = useCachedResource(
-    SHOW_BOARD_PE ? cacheKey('pe:industry:industry') : null,
-    useCallback(() => listPeIndustry('industry'), []),
+  const idxRes = useMemo(
+    () => ({
+      data: bundle?.index ?? null,
+      loading: summaryRes.loading,
+      error: summaryRes.error,
+      revalidate: summaryRes.revalidate,
+    }),
+    [bundle, summaryRes.loading, summaryRes.error, summaryRes.revalidate],
+  )
+  const extremeRes = useMemo(
+    () => ({
+      data: bundle?.extreme ?? null,
+      loading: summaryRes.loading,
+      error: summaryRes.error,
+      revalidate: summaryRes.revalidate,
+    }),
+    [bundle, summaryRes.loading, summaryRes.error, summaryRes.revalidate],
   )
 
-  const indexRows = idxRes.data ?? []
-  const industryRows = regionRes.data ?? []
-  const macroRows = macroRes.data ?? []
+  /** 板块数据：SHOW_BOARD_PE 关闭时后端返回空数组，这里不额外发请求 */
+  const gapNotes = bundle?.gap ?? []
+  const indexRows = bundle?.index ?? []
+  const industryRows = bundle?.region ?? []
+  const macroRows = bundle?.industry ?? []
 
   /** 所选时间段是否需要全量历史（仅「近 3 年 / 全部」需要） */
   const needsFull = period === '3y' || period === 'all'
@@ -866,7 +887,7 @@ export function MarketPage(_props: { view?: 'today' | 'history' } = {}) {
               </div>
             </div>
             <div className="overflow-x-auto">
-              {(indTab === 'region' ? regionRes : macroRes).loading && !activeRows.length ? (
+              {(summaryRes.loading && !activeRows.length) ? (
                 <div className="p-4">
                   <div className="skeleton h-64 rounded-xl" />
                 </div>

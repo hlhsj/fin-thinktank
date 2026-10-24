@@ -6,7 +6,7 @@ import type { StockValuationRow } from '../lib/types'
 import { cn } from '../lib/utils'
 import { DIM_LABELS, barTone, clampScore } from '../lib/dimDetail'
 import { ValuationHistoryCard } from './ValuationHistoryCard'
-import { valuateDebubble } from '../services/valuateLive'
+import { valuateCycle, valuateDebubble } from '../services/valuateLive'
 
 /**
  * 估值结果视图（详情页与实时搜索结果共用）。
@@ -77,6 +77,35 @@ function RangeRuler({ row }: { row: StockValuationRow }) {
     }
   }
 
+  /* 周期重算（v3.0.2）：按需二次计算，口径 = 正常化 EPS + 去泡沫通道。
+     hooks 同样必须写在条件 return 之前。 */
+  const [cyTarget, setCyTarget] = useState<number | null>(null)
+  const [cyLoading, setCyLoading] = useState(false)
+  const [cyErr, setCyErr] = useState<string | null>(null)
+  useEffect(() => {
+    setCyTarget(null)
+    setCyErr(null)
+  }, [row.code])
+
+  const canCy = Boolean(row.channel?.cycle?.can)
+  const runCycle = async () => {
+    if (cyTarget) {
+      setCyTarget(null)
+      return
+    }
+    setCyLoading(true)
+    setCyErr(null)
+    try {
+      const r = await valuateCycle(row.code)
+      setCyTarget(r?.applicable ? (r.target ?? null) : null)
+      if (r && !r.applicable) setCyErr(r.reason ?? '无法完成周期重算')
+    } catch (e) {
+      setCyErr(e instanceof Error ? e.message : String(e))
+    } finally {
+      setCyLoading(false)
+    }
+  }
+
   const lo = row.fair_low
   const hi = row.fair_high
   const target = row.target
@@ -106,7 +135,7 @@ function RangeRuler({ row }: { row: StockValuationRow }) {
 
   /** 轴域必须覆盖全部四个价位：理论安全边际常常低于下沿（招行 38.49 < 43.30），
    *  只按 [lo, hi] 取域会把它挤出可视区、被 clamp 贴到左端，比例失真。 */
-  const pts = [lo, hi, target, buy, price, dbTarget].filter(
+  const pts = [lo, hi, target, buy, price, dbTarget, cyTarget].filter(
     (v): v is number => v !== null && v !== undefined && Number.isFinite(v) && v > 0,
   )
   const dMin = Math.min(...pts)
@@ -123,6 +152,8 @@ function RangeRuler({ row }: { row: StockValuationRow }) {
     // 去泡沫只画一条灰虚线，**标尺上不挂文字**：它常与「理论安全边际」只差 1–2%
     // （茅台 979.70 与 1001.82），两行交错也必然叠字。数值放到下面的指标格里。
     { label: '', v: dbTarget ?? NaN, line: 'bg-mist-300', text: 'text-mist-300', dash: true },
+    // 周期重算线：与去泡沫同为按需口径，颜色再深一档以示区分
+    { label: '', v: cyTarget ?? NaN, line: 'bg-mist-400', text: 'text-mist-400', dash: true },
     { label: '现价', v: price, line: 'bg-up', text: 'text-up' },
   ].filter((m) => Number.isFinite(m.v) && m.v > 0)
 
@@ -134,35 +165,69 @@ function RangeRuler({ row }: { row: StockValuationRow }) {
     <Card>
       <div className="mb-1 flex flex-wrap items-center gap-2">
         <h2 className="serif text-[16px] text-mist-100">估值区间</h2>
-        <button
-          type="button"
-          onClick={() => void runDebubble()}
-          disabled={!canDb || dbLoading}
-          title={
-            !canDb
-              ? (row.channel?.debubble?.reason ?? '该样本不支持去泡沫计算')
-              : dbTarget
-                ? '移除去泡沫计算值'
-                : '按「近 3 年 + 剔除最高 10%」重算历史通道，只多一个公平价（按需计算，不影响首屏）'
-          }
-          className={cn(
-            'ml-auto inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-[11.5px] transition',
-            !canDb || dbLoading
-              ? 'cursor-not-allowed border-ink-800 text-mist-700'
-              : dbTarget
-                ? 'border-gold/50 bg-gold/10 text-gold-soft hover:bg-gold/15'
-                : 'border-ink-700 text-mist-400 hover:border-gold/40 hover:text-gold-soft',
-          )}
-        >
-          {dbLoading ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
-          {dbLoading ? '计算中…' : dbTarget ? '取消去泡沫' : '去泡沫计算'}
-        </button>
+        {canCy ? (
+          <span
+            title={`TTM EPS 是正常化 ${row.channel?.cycle?.eps_ratio ?? '—'} 倍，主口径公平价会被同比例放大——点右侧「周期重算」`}
+            className="whitespace-nowrap rounded-md border border-gold/40 bg-gold/10 px-1.5 py-0.5 text-[10.5px] text-gold-soft"
+          >
+            建议周期重算
+          </span>
+        ) : null}
+        <div className="ml-auto flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => void runCycle()}
+            disabled={!canCy || cyLoading}
+            title={
+              !canCy
+                ? (row.channel?.cycle?.reason ?? '该样本不支持周期重算')
+                : cyTarget
+                  ? '移除周期重算值'
+                  : '按「正常化 EPS（ROE 中位 × BPS）+ 去泡沫通道」重算，解决周期峰值利润把公平价放大的问题'
+            }
+            className={cn(
+              'inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-[11.5px] transition',
+              !canCy || cyLoading
+                ? 'cursor-not-allowed border-ink-800 text-mist-700'
+                : cyTarget
+                  ? 'border-mist-500/60 bg-mist-500/10 text-mist-200 hover:bg-mist-500/15'
+                  : 'border-ink-700 text-mist-400 hover:border-mist-500/50 hover:text-mist-200',
+            )}
+          >
+            {cyLoading ? <Loader2 size={11} className="animate-spin" /> : <TrendingUp size={11} />}
+            {cyLoading ? '计算中…' : cyTarget ? '取消周期' : '周期重算'}
+          </button>
+          <button
+            type="button"
+            onClick={() => void runDebubble()}
+            disabled={!canDb || dbLoading}
+            title={
+              !canDb
+                ? (row.channel?.debubble?.reason ?? '该样本不支持去泡沫计算')
+                : dbTarget
+                  ? '移除去泡沫计算值'
+                  : '按「近 3 年 + 剔除最高 10%」重算历史通道，只多一个公平价（按需计算，不影响首屏）'
+            }
+            className={cn(
+              'inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-[11.5px] transition',
+              !canDb || dbLoading
+                ? 'cursor-not-allowed border-ink-800 text-mist-700'
+                : dbTarget
+                  ? 'border-gold/50 bg-gold/10 text-gold-soft hover:bg-gold/15'
+                  : 'border-ink-700 text-mist-400 hover:border-gold/40 hover:text-gold-soft',
+            )}
+          >
+            {dbLoading ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
+            {dbLoading ? '计算中…' : dbTarget ? '取消去泡沫' : '去泡沫计算'}
+          </button>
+        </div>
       </div>
       <p className="mb-3 text-[11.5px] text-mist-700">
         色带为合理区间；<span className="text-down">绿线理论安全边际</span> ·
         <span className="text-gold-soft"> 金线公平价</span> ·
         <span className="text-up"> 红线现价</span>
         {dbTarget ? <span className="text-mist-300"> · 灰虚线去泡沫计算值</span> : null}
+        {cyTarget ? <span className="text-mist-400"> · 点线周期重算值</span> : null}
       </p>
 
       <div className="relative mx-1 h-[96px] select-none">
@@ -203,17 +268,21 @@ function RangeRuler({ row }: { row: StockValuationRow }) {
         <span className="absolute -bottom-1 right-0 text-[10px] text-mist-700">{fmtNum(max, 1)}</span>
       </div>
 
-      {dbErr ? (
+      {dbErr || cyErr ? (
         <p className="mt-2 rounded-lg border border-down/30 bg-down/5 px-3 py-2 text-[11.5px] text-down">
-          {dbErr}
+          {dbErr ?? cyErr}
         </p>
       ) : null}
 
-      {/* 去泡沫只加「一个值」：不加区间、买点、E(R)、判定——那些仍以主口径为准 */}
+      {/* 两个按需口径都只加「一个值」：不加区间、买点、E(R)、判定——那些仍以主口径为准 */}
       <dl
         className={cn(
           'mt-2 grid grid-cols-2 gap-x-6 gap-y-1.5 border-t border-ink-800 pt-3 text-[12.5px]',
-          dbTarget ? 'md:grid-cols-5' : 'md:grid-cols-4',
+          dbTarget && cyTarget
+            ? 'md:grid-cols-6'
+            : dbTarget || cyTarget
+              ? 'md:grid-cols-5'
+              : 'md:grid-cols-4',
         )}
       >
         {[
@@ -228,6 +297,9 @@ function RangeRuler({ row }: { row: StockValuationRow }) {
           ...(dbTarget
             ? [{ k: '去泡沫公平价', v: fmtNum(dbTarget), tone: 'text-mist-300' }]
             : []),
+          ...(cyTarget
+            ? [{ k: '周期公平价', v: fmtNum(cyTarget), tone: 'text-mist-400' }]
+            : []),
         ].map((x) => (
           <div key={x.k} className="flex items-baseline justify-between gap-2 md:block">
             <dt className="text-[11.5px] text-mist-700">{x.k}</dt>
@@ -235,6 +307,16 @@ function RangeRuler({ row }: { row: StockValuationRow }) {
           </div>
         ))}
       </dl>
+
+      {cyTarget && row.channel?.cycle ? (
+        <p className="mt-2 text-[11px] leading-relaxed text-mist-700">
+          周期口径：正常化 EPS {fmtNum(row.channel.cycle.eps_norm, 2)} 元
+          {row.channel.cycle.eps_ttm
+            ? `（TTM ${fmtNum(row.channel.cycle.eps_ttm, 2)} 元，${fmtNum(row.channel.cycle.eps_ratio, 1)}×）`
+            : ''}
+          ，通道取近 3 年并剔除最高 10%。
+        </p>
+      ) : null}
 
       {row.e_return !== null && row.e_return !== undefined ? (
         <p className="mt-3 border-t border-ink-800 pt-2.5 text-[12px] text-mist-500">

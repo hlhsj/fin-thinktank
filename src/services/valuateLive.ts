@@ -1,4 +1,4 @@
-import type { StockValuationDebubble, StockValuationRow } from '../lib/types'
+import type { StockValuationCycle, StockValuationDebubble, StockValuationRow } from '../lib/types'
 
 /**
  * 估值实时计算 / 股票搜索（本地 API）。
@@ -19,6 +19,8 @@ export interface LiveValuation extends StockValuationRow {
   _cached?: boolean
   /** 仅 `debubble=1` 时返回：去泡沫二次估值结果 */
   debubble_result?: StockValuationDebubble | null
+  /** 仅 `cycle=1` 时返回：周期重算结果（正常化 EPS + 去泡沫通道） */
+  cycle_result?: StockValuationCycle | null
 }
 
 export interface SearchItem {
@@ -83,6 +85,21 @@ export async function valuateDebubble(code: string): Promise<StockValuationDebub
     `/api/valuate?code=${encodeURIComponent(code)}&debubble=1`,
   )
   return data.row.debubble_result ?? null
+}
+
+/**
+ * 按需的「周期重算」。
+ *
+ * 与去泡沫的区别：去泡沫只换历史通道，计价单位仍是 EPS(TTM)；
+ * 周期重算同时把计价单位换成**跨周期正常化 EPS**（ROE 中位 × BPS），
+ * 解决「周期顶部 TTM 利润 × 历史倍数」把公平价放大一个数量级的问题。
+ * 同样由按钮触发、命中缓存时复用已取数据重算，不进主响应。
+ */
+export async function valuateCycle(code: string): Promise<StockValuationCycle | null> {
+  const data = await getJson<{ row: LiveValuation & { cycle_result?: StockValuationCycle | null } }>(
+    `/api/valuate?code=${encodeURIComponent(code)}&cycle=1`,
+  )
+  return data.row.cycle_result ?? null
 }
 
 /**

@@ -12,12 +12,12 @@ export default defineConfig({
     // 反向代理域名需要显式放行，否则 Vite 会拦截请求
     allowedHosts: true,
     /**
-     * 估值实时计算 API（本地 Python 服务，stock_value_estimator-main/api/server.py）。
-     * 前端只调 /api/*，由 Vite 转发到 8787；构建产物不依赖此代理（线上需同源反代）。
+     * 估值实时计算 API（v2：FastAPI 单端口服务，`python -m app` 默认 4173）。
+     * 本地开发时前端 5173，由 Vite 转发到后端 4173；线上同源，不需要代理。
      */
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:8787',
+        target: 'http://127.0.0.1:4173',
         changeOrigin: true,
       },
     },
@@ -42,7 +42,6 @@ export default defineConfig({
           if (/node_modules[\\/](react-markdown|remark-|rehype-|highlight\.js|mdast|micromark|unified|unist)/.test(id)) {
             return 'markdown'
           }
-          if (id.includes('node_modules/@tencent-ai/workbuddy-cloud-sdk')) return 'cloud'
           return undefined
         },
       },

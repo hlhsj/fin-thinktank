@@ -34,3 +34,11 @@ scripts/output/
 *.csv
 *.xlsx
 *.parquet
+
+# ---------- Python 后端 ----------
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/

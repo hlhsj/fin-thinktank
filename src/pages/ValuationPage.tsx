@@ -100,6 +100,14 @@ function ResultRow({
         <span className="text-mist-700"> × </span>
         {row.stage ?? '—'}
         {row.substage ? <span className="text-[11px] text-gold/80">（{row.substage}）</span> : null}
+        {row.channel?.cycle?.can ? (
+          <span
+            title={`TTM EPS 是正常化 ${row.channel.cycle.eps_ratio ?? '—'} 倍，建议在详情里点「周期重算」看跨周期口径`}
+            className="ml-1.5 whitespace-nowrap rounded border border-gold/40 bg-gold/10 px-1 py-0.5 text-[10.5px] text-gold-soft"
+          >
+            周期重算
+          </span>
+        ) : null}
       </td>
       <td className="px-3 py-2.5 text-right">
         {row.score_total !== null ? (
@@ -197,6 +205,14 @@ function ResultCard({
       <p className="mt-1 text-[11.5px] text-mist-500">
         {row.mode ?? '—'} × {row.stage ?? '—'}
         {row.substage ? <span className="text-gold/80">（{row.substage}）</span> : null}
+        {row.channel?.cycle?.can ? (
+          <span
+            title={`TTM EPS 是正常化 ${row.channel.cycle.eps_ratio ?? '—'} 倍，展开详情点「周期重算」`}
+            className="ml-1.5 rounded border border-gold/40 bg-gold/10 px-1 py-0.5 text-[10px] text-gold-soft"
+          >
+            周期重算
+          </span>
+        ) : null}
       </p>
       <div className="mt-1.5 flex items-center justify-between text-[12px]">
         <span className="text-mist-400">
@@ -433,7 +449,7 @@ export function ValuationPage() {
         right={
           <span className="hidden items-center gap-1.5 rounded-xl border border-ink-700 bg-ink-900 px-3 py-1.5 text-[12px] text-mist-500 md:inline-flex">
             <Calculator size={13} className="text-gold" />
-            模型版本 v3.0 · 实时计算
+            模型版本 v3.0.2 · 实时计算
           </span>
         }
       />
@@ -694,6 +710,14 @@ export function ValuationPage() {
               {expandedRow.substage ? `（${expandedRow.substage}）` : ''}　·　现价{' '}
               {fmtNum(expandedRow.price)}
               {expandedRow._elapsed ? `　·　耗时 ${expandedRow._elapsed}s` : ''}
+              {expandedRow.channel?.cycle?.can ? (
+                <span className="text-gold-soft">
+                  　·　建议周期重算
+                  {expandedRow.channel.cycle.eps_ratio
+                    ? `（TTM EPS ${expandedRow.channel.cycle.eps_ratio}× 正常化）`
+                    : ''}
+                </span>
+              ) : null}
             </p>
             <ValuationResultView row={expandedRow} />
           </div>

@@ -1,18 +1,12 @@
-import { cloud } from '../lib/cloud'
+import { call } from './api'
 import { normalizePhone } from '../lib/utils'
 
 /**
- * 自建账号体系。
+ * 自建账号体系（v2：经 BFF 转发）。
  *
- * 为什么不用云服务自带的 Auth：注册接口强制要求短信验证码换来的 verification_token，
- * 纯「用户名 + 密码」注册会被上游 501 明确拒绝（已实测）。为了让 wizard 式的一键注册成立，
- * 账号改为本站自建，落在云数据库的 `app_users` 表。
- *
- * 安全设计：
- * - `app_users` 开启 RLS 且不建任何读策略，客户端角色拿不到任何一行，密码哈希不外泄。
- * - 注册/登录/刷新/后台都走 SECURITY DEFINER 函数，密码用 pgcrypto bcrypt 在**服务端**比对，
- *   明文密码仅存在于这一次 HTTPS 请求中；函数只回传权益字段，从不返回 password_hash。
- * - 平台历史上第一个注册的账号自动成为管理员，之后由管理员授权。
+ * 与 v1 的区别：浏览器不再直连云库 RPC，改为 POST `/api/rpc/{method}`，
+ * 由 Python 后端转发数据库 SECURITY DEFINER 函数。
+ * 安全属性不变：密码用 bcrypt 在**服务端**比对、哈希不出库、令牌由数据库签发。
  */
 export interface AccountSession {
   uid: string
@@ -22,13 +16,6 @@ export interface AccountSession {
   masterExpireAt: string | null
   masterPeriod: string | null
   isAdmin: boolean
-  /**
-   * 服务端签发的访问令牌（HMAC-SHA256，`uid|过期时间.签名`，有效期 7 天）。
-   *
-   * 用途：受保护数据（订单、章节正文、留言）不再对匿名角色开放，
-   * 必须带上它调用 SECURITY DEFINER 函数，由**服务端**校验身份与权益后再返回。
-   * 密钥只存在于数据库函数内，前端无法伪造。
-   */
   token: string | null
 }
 
@@ -44,12 +31,6 @@ interface AuthRpcRow {
   is_admin: boolean | null
   token: string | null
 }
-
-/** SDK 的 rpc 泛型依赖 schema 的 Functions 类型，这里按实际返回形态单独断言一次即可 */
-const rpc = cloud.database.rpc as unknown as (
-  fn: string,
-  args: Record<string, unknown>,
-) => Promise<{ data: AuthRpcRow[] | null; error: unknown }>
 
 export const AUTH_REASON_TEXT: Record<string, string> = {
   PHONE_INVALID: '请输入正确的 11 位手机号',
@@ -75,10 +56,8 @@ function toSession(row: AuthRpcRow): AccountSession {
   }
 }
 
-async function callAuth(fn: string, args: Record<string, unknown>): Promise<AccountSession> {
-  const { data, error } = await rpc(fn, args)
-  if (error) throw error
-  const row = Array.isArray(data) ? data[0] : null
+async function callAuth(method: string, args: Record<string, unknown>): Promise<AccountSession> {
+  const row = await call<AuthRpcRow | null>(method, args)
   if (!row) throw new Error('服务未返回结果，请稍后重试')
   if (!row.ok || !row.uid) {
     throw new Error(AUTH_REASON_TEXT[row.reason ?? ''] ?? '操作失败，请稍后重试')
@@ -87,26 +66,23 @@ async function callAuth(fn: string, args: Record<string, unknown>): Promise<Acco
 }
 
 export function registerAccount(phone: string, password: string, nickname?: string) {
-  return callAuth('app_register', {
-    p_phone: normalizePhone(phone),
-    p_password: password,
-    p_nickname: nickname?.trim() ?? '',
+  return callAuth('registerAccount', {
+    phone: normalizePhone(phone),
+    password,
+    nickname: nickname?.trim() ?? '',
   })
 }
 
 export function loginAccount(phone: string, password: string) {
-  return callAuth('app_login', {
-    p_phone: normalizePhone(phone),
-    p_password: password,
-  })
+  return callAuth('loginAccount', { phone: normalizePhone(phone), password })
 }
 
 /**
  * 顶部导航「刷新状态」：不需要密码，仅凭 uid 重读一次权益。
- * 注意：该 RPC 不签发新 token，因此沿用调用方原有的 token（否则刷新后受保护数据会读不到）。
+ * 该 RPC 不签发新 token，因此沿用调用方原有 token（否则刷新后受保护数据会读不到）。
  */
 export async function refreshAccount(uid: string, prevToken?: string | null): Promise<AccountSession> {
-  const s = await callAuth('app_refresh_account', { p_uid: uid })
+  const s = await callAuth('refreshAccount', { uid })
   return { ...s, token: prevToken ?? s.token }
 }
 
@@ -116,15 +92,11 @@ export interface AdminUserRow extends AccountSession {
 }
 
 export async function adminListUsers(adminUid: string, token: string | null): Promise<AdminUserRow[]> {
-  // 用户管理系列 RPC 统一改为「uid + 服务端令牌」校验：只凭 uid 调用可被冒用（uid 泄露即可提权/授权）
-  const { data, error } = await rpc('app_admin_list_users', { p_uid: adminUid, p_token: token ?? '' })
-  if (error) throw error
-  const row = Array.isArray(data) ? data[0] : null
-  if (!row) throw new Error('服务未返回结果，请稍后重试')
-  if (!row.ok) throw new Error(AUTH_REASON_TEXT[row.reason ?? ''] ?? '查询失败')
-  const list = (data ?? []).filter((r) => r.ok) as Array<
-    AuthRpcRow & { created_at: string | null; last_login_at: string | null }
-  >
+  const rows = await call<Array<AuthRpcRow & { created_at: string | null; last_login_at: string | null }>>(
+    'adminListUsers',
+    { adminUid, token },
+  )
+  const list = (rows ?? []).filter((r) => r.ok)
   return list.map((r) => ({
     ...toSession(r),
     createdAt: r.created_at ?? null,
@@ -138,35 +110,25 @@ export function adminGrant(
   phone: string,
   memberExpire: string | null,
   masterExpire: string | null,
+  masterPeriod?: string | null,
 ) {
-  return callAuth('app_admin_grant', {
-    p_uid: adminUid,
-    p_token: token ?? '',
-    p_phone: normalizePhone(phone),
-    p_member_expire: memberExpire,
-    p_master_expire: masterExpire,
+  return callAuth('adminGrant', {
+    adminUid,
+    token,
+    phone: normalizePhone(phone),
+    memberExpire,
+    masterExpire,
+    masterPeriod: masterPeriod ?? null,
   })
 }
 
-/**
- * 取消用户权益。
- *
- * 为什么需要独立 RPC：`app_admin_grant` 里学员到期日是 `COALESCE(新值, 旧值)`，
- * 传 null 表示「不改动」——所以无法用它取消学员权益；本函数按 kind 显式置空：
- * `member`（仅学员）/ `master`（仅高级学员）/ `all`（两者都取消）。
- */
 export async function adminRevoke(
   adminUid: string,
   token: string | null,
   targetUid: string,
   kind: 'member' | 'master' | 'all',
 ): Promise<AccountSession> {
-  return callAuth('app_admin_revoke', {
-    p_uid: adminUid,
-    p_token: token ?? '',
-    p_target_uid: targetUid,
-    p_kind: kind,
-  })
+  return callAuth('adminRevoke', { adminUid, token, targetUid, kind })
 }
 
 export async function adminSetAdmin(
@@ -175,32 +137,17 @@ export async function adminSetAdmin(
   targetUid: string,
   isAdmin: boolean,
 ) {
-  const { data, error } = (await rpc('app_admin_set_admin', {
-    p_uid: adminUid,
-    p_token: token ?? '',
-    p_target_uid: targetUid,
-    p_is_admin: isAdmin,
-  })) as unknown as { data: boolean | null; error: unknown }
-  if (error) throw error
-  if (data !== true) throw new Error('操作未生效，请确认你有管理权限')
+  const ok = await call<boolean>('adminSetAdmin', { adminUid, token, targetUid, isAdmin })
+  if (ok !== true) throw new Error('操作未生效，请确认你有管理权限')
 }
 
 /* ---------------- 密码重置（忘记密码） ---------------- */
 
-/**
- * 忘记密码：提交重置申请。
- *
- * 安全设计：仅凭手机号就能改密码并不安全（手机号属公开信息，等于账号可被任意夺取），
- * 因此这里只**生成待审申请**：新密码在服务端立即用 bcrypt 加密入库（明文不落库、也不再回传），
- * 由管理员在后台「用户与权益 → 密码重置」核对身份后批准，批准的那一刻才真正写入账号。
- */
 export async function requestPasswordReset(phone: string, newPassword: string): Promise<void> {
-  const { data, error } = await rpc('app_request_password_reset', {
-    p_phone: normalizePhone(phone),
-    p_new_password: newPassword,
+  const row = await call<AuthRpcRow | null>('requestPasswordReset', {
+    phone: normalizePhone(phone),
+    newPassword,
   })
-  if (error) throw error
-  const row = Array.isArray(data) ? data[0] : null
   if (!row?.ok) throw new Error(AUTH_REASON_TEXT[row?.reason ?? ''] ?? '提交失败，请稍后重试')
 }
 
@@ -213,17 +160,12 @@ export interface PasswordResetRow {
   handledAt: string | null
 }
 
-/** 管理员：密码重置申请列表（待审的排最前） */
 export async function adminListPasswordResets(
   uid: string,
   token: string | null,
 ): Promise<PasswordResetRow[]> {
-  const { data, error } = (await rpc('app_admin_list_password_resets', {
-    p_uid: uid,
-    p_token: token ?? '',
-  })) as unknown as { data: Array<Record<string, unknown>> | null; error: unknown }
-  if (error) throw error
-  return (data ?? []).map((r) => ({
+  const rows = await call<Array<Record<string, unknown>>>('adminListPasswordResets', { uid, token })
+  return (rows ?? []).map((r) => ({
     id: Number(r.id),
     phone: String(r.phone ?? ''),
     nickname: String(r.nickname ?? ''),
@@ -233,18 +175,11 @@ export async function adminListPasswordResets(
   }))
 }
 
-/** 管理员：批准（true）或拒绝（false）重置申请；批准后新密码对该账号立即生效 */
 export async function adminResolvePasswordReset(
   uid: string,
   token: string | null,
   resetId: number,
   approve: boolean,
 ): Promise<void> {
-  const { error } = await rpc('app_admin_resolve_password_reset', {
-    p_uid: uid,
-    p_token: token ?? '',
-    p_reset_id: resetId,
-    p_approve: approve,
-  })
-  if (error) throw error
+  await call('adminResolvePasswordReset', { uid, token, resetId, approve })
 }
